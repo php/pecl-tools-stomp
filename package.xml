@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.4.7" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+    <name>stomp</name>
+    <channel>pecl.php.net</channel>
+    <summary>Stomp client extension</summary>
+    <description>
+This extension allows php applications to comunicate with any Stomp compliant Message Brokers through easy object oriented and procedural interfaces. 
+    </description>
+    <lead>
+        <name>Pierrick Charron</name>
+        <user>pierrick</user>
+        <email>pierrick@php.net</email>
+        <active>yes</active>
+    </lead>
+    <date>2009-10-30</date>
+    <version><release>0.1.0</release><api>0.1.0</api></version>
+    <stability><release>alpha</release><api>alpha</api></stability>
+    <license uri="http://www.php.net/license">PHP License</license>
+    <notes>
+- Initial PECL release. (pierrick)
+    </notes>
+
+    <contents>
+        <dir name="/">
+            <file role="doc" name="CREDITS" />
+            <file role="doc" name="EXPERIMENTAL" />
+            <file role="doc" name="TODO" />
+            <file role="src" name="config.m4" />
+            <file role="src" name="config.w32" />
+            <file role="src" name="php_stomp.c" />
+            <file role="src" name="php_stomp.h" />
+            <file role="src" name="stomp.c" />
+            <file role="src" name="stomp.h" />
+            <dir name="tests">
+                <file role="test" name="001-stomp.phpt" />
+                <file role="test" name="002-version.phpt" />
+                <file role="test" name="003-connect/001.phpt" />
+                <file role="test" name="004-getSessionId/001.phpt" />
+                <file role="test" name="005-close/001.phpt" />
+                <file role="test" name="006-send/001.phpt" />
+                <file role="test" name="007-subscribe/001.phpt" />
+                <file role="test" name="008-unsubscribe/001.phpt" />
+            </dir>
+            <dir name="doc">
+                <file role="doc" name="classes.php" />
+                <file role="doc" name="functions.php" />
+            </dir>
+            <dir name="examples">
+                <file role="doc" name="oop.php" />
+                <file role="doc" name="procedural.php" />
+            </dir>
+        </dir>
+    </contents>
+
+    <dependencies>
+        <required>
+            <php>
+                <min>5.2.10</min>
+            </php>
+            <pearinstaller>
+                <min>1.4.0</min>
+            </pearinstaller>
+        </required>
+    </dependencies>
+
+    <providesextension>stomp</providesextension>
+
+    <extsrcrelease />
+
+    <changelog>
+    </changelog>
+
+</package>
