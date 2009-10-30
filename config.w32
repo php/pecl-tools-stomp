@@ -1,0 +1,9 @@
+// $Id$
+// vim:ft=javascript
+
+ARG_ENABLE("stomp", "enable stomp support", "no");
+
+if (PHP_STOMP != "no") {
+	EXTENSION("stomp", "stomp.c php_stomp.c");
+}
+
