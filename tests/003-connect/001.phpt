@@ -1,5 +1,5 @@
 --TEST--
-Check stom_connect
+Check stomp_connect
 --SKIPIF--
 <?php if (!extension_loaded("stomp")) print "skip"; ?>
 --FILE--

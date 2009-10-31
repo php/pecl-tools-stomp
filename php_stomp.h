@@ -21,6 +21,8 @@
 #ifndef PHP_STOMP_H
 #define PHP_STOMP_H
 
+#include "stomp.h"
+
 typedef struct _stomp_object {
     zend_object std;
     stomp_t *stomp;

@@ -27,8 +27,6 @@
 #include "zend_exceptions.h"
 #include "ext/standard/info.h"
 #include "ext/standard/url.h"
-#include "ext/standard/fsock.h"
-#include "stomp.h"
 #include "php_stomp.h"
 
 #include "ext/standard/php_smart_str.h"
