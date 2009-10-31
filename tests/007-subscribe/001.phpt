@@ -18,4 +18,4 @@ $s->subscribe('/queue/test', 'string');
 ?>
 --EXPECTF--
 Destination can not be empty
-Warning: Stomp::subscribe() expects parameter 2 to be array, string given in %s on line %d
+Catchable fatal error: Argument 2 passed to Stomp::subscribe() must be an array, string given in %s on line %d
