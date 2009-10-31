@@ -23,6 +23,10 @@
 
 #include "php_network.h"
 
+#if HAVE_STOMP_SSL
+#include <openssl/ssl.h>
+#endif
+
 #define STOMP_BUFSIZE 4096
 
 #define INIT_STOMP_FRAME(f) \
@@ -30,8 +34,6 @@
     f->command = NULL; f->body = NULL; \
     ALLOC_HASHTABLE(f->headers); \
     zend_hash_init(f->headers, 0, NULL, NULL, 0);
-
-#define stomp_recv(c,b,l) recv((c)->fd, b, l, 0)
 
 typedef struct _stomp {
     php_socket_t fd;    
@@ -44,6 +46,10 @@ typedef struct _stomp {
     long timeout_sec;
     long timeout_usec;
     char *session;
+#if HAVE_STOMP_SSL
+    SSL *ssl_handle;
+    int use_ssl;
+#endif
 } stomp_t;
 
 typedef struct _stomp_frame {

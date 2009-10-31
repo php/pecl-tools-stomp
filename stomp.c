@@ -50,6 +50,11 @@ stomp_t *stomp_new(const char *host, unsigned short port, long timeout_sec, long
     stomp->timeout_usec = timeout_usec;
     stomp->session = NULL;
 
+#if HAVE_STOMP_SSL
+    stomp->ssl_handle = NULL;
+    stomp->use_ssl = 0;
+#endif
+
     return stomp;
 }
 /* }}} */
@@ -102,6 +107,32 @@ int stomp_connect(stomp_t *stomp TSRMLS_DC)
     FD_SET(stomp->fd, &rfds);
 
     if (select(stomp->fd + 1, NULL, &rfds, NULL, &tv) > 0) {
+#if HAVE_STOMP_SSL
+        if (stomp->use_ssl) {
+            SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
+            if (NULL == ctx) {
+                stomp_set_error(stomp, "failed to create the SSL context", 0);
+                return 0;
+            }
+
+            SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+            stomp->ssl_handle = SSL_new(ctx);
+            if (stomp->ssl_handle == NULL) {
+                stomp_set_error(stomp, "failed to create the SSL handle", 0);
+                SSL_CTX_free(ctx);
+                return 0;
+            }
+            
+            SSL_set_fd(stomp->ssl_handle, stomp->fd);
+
+            if (SSL_connect(stomp->ssl_handle) <= 0) {
+                stomp_set_error(stomp, "SSL/TLS handshake failed", 0);
+                SSL_shutdown(stomp->ssl_handle);
+                return 0;
+            }
+        }
+#endif        
         return 1;
     } else {
         snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
@@ -120,6 +151,11 @@ int stomp_close(stomp_t *stomp TSRMLS_DC)
     }
 
     if (stomp->fd != -1) {
+#if HAVE_STOMP_SSL
+        if(stomp->ssl_handle) {
+            SSL_shutdown(stomp->ssl_handle);
+        }
+#endif
         closesocket(stomp->fd);
     }
     if (stomp->host) {
@@ -182,13 +218,39 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
         smart_str_appends(&buf, frame->body);
     }
 
-    if (-1 == send(stomp->fd, buf.c, buf.len, 0) || -1 == send(stomp->fd, "\0\n", 2, 0)) {
-        return 0;
+#ifdef HAVE_STOMP_SSL
+    if (stomp->use_ssl) {
+        if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
+            return 0;
+        }
+    } else {
+#endif        
+        if (-1 == send(stomp->fd, buf.c, buf.len, 0) || -1 == send(stomp->fd, "\0\n", 2, 0)) {
+            return 0;
+        }
+#ifdef HAVE_STOMP_SSL
     }
+#endif        
 
     smart_str_free(&buf);
 
     return 1;
+}
+/* }}} */
+
+/* {{{ stomp_recv
+ */
+int stomp_recv(stomp_t *stomp, char *msg, size_t length)
+{
+#if HAVE_STOMP_SSL
+    if(stomp->use_ssl) {
+        return SSL_read(stomp->ssl_handle, msg, length);
+    } else {
+#endif
+        return recv(stomp->fd, msg, length, 0);
+#if HAVE_STOMP_SSL
+    }
+#endif    
 }
 /* }}} */
 

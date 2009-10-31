@@ -4,7 +4,7 @@
     <channel>pecl.php.net</channel>
     <summary>Stomp client extension</summary>
     <description>
-This extension allows php applications to comunicate with any Stomp compliant Message Brokers through easy object oriented and procedural interfaces. 
+This extension allows php applications to communicate with any Stomp compliant Message Brokers through easy object oriented and procedural interfaces. 
     </description>
     <lead>
         <name>Pierrick Charron</name>

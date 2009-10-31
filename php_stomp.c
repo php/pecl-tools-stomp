@@ -373,7 +373,11 @@ PHP_FUNCTION(stomp_connect)
     char *broker = NULL, *username = NULL, *password = NULL;
     int broker_len = 0, username_len = 0, password_len = 0;
     struct timeval tv;
-    php_url *url_parts; 
+    php_url *url_parts;
+
+#ifdef HAVE_STOMP_SSL    
+    int use_ssl = 0;
+#endif    
 
     tv.tv_sec = 2;
     tv.tv_usec = 0;
@@ -394,15 +398,29 @@ PHP_FUNCTION(stomp_connect)
         php_url_free(url_parts);
         return;
     }
-            
-    if (url_parts->scheme && strcmp(url_parts->scheme, "tcp") != 0) {
-        STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI_SCHEME);
-        php_url_free(url_parts);
-        return;
+
+    if (url_parts->scheme) {
+        if (strcmp(url_parts->scheme, "ssl") == 0) {
+#if HAVE_STOMP_SSL
+            use_ssl = 1;
+#else
+            STOMP_ERROR(0, "SSL DISABLED");
+            php_url_free(url_parts);
+            return;
+#endif        
+        } else if (strcmp(url_parts->scheme, "tcp") != 0) {
+            STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI_SCHEME);
+            php_url_free(url_parts);
+            return;
+        }
     }
 
     stomp = stomp_new(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(timeout_sec), STOMP_G(timeout_usec) TSRMLS_CC);
     php_url_free(url_parts);
+
+#if HAVE_STOMP_SSL
+    stomp->use_ssl = use_ssl;
+#endif    
 
     if ((stomp->status = stomp_connect(stomp TSRMLS_CC))) {
         stomp_frame_t *res;
