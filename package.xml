@@ -61,11 +61,18 @@ This extension allows php applications to communicate with any Stomp compliant M
                 <min>1.4.0</min>
             </pearinstaller>
         </required>
+        <optional>
+            <extension>
+                <name>openssl</name>
+            </extension>
+        </optional>
     </dependencies>
 
     <providesextension>stomp</providesextension>
 
-    <extsrcrelease />
+    <extsrcrelease>
+        <configureoption default="/usr" name="with-openssl-dir" prompt="OpenSSL install prefix (no to disable SSL support)" /> 
+    </extsrcrelease>
 
     <changelog>
         <release>
