@@ -30,7 +30,7 @@ typedef struct _stomp_object {
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
 #define PHP_STOMP_MAJOR_VERSION                 "0"
-#define PHP_STOMP_MINOR_VERSION                 "1"
+#define PHP_STOMP_MINOR_VERSION                 "3"
 #define PHP_STOMP_PATCH_VERSION                 "0"
 #define PHP_STOMP_VERSION                       PHP_STOMP_MAJOR_VERSION "." PHP_STOMP_MINOR_VERSION "." PHP_STOMP_PATCH_VERSION
 
@@ -79,15 +79,17 @@ PHP_FUNCTION(stomp_commit);
 PHP_FUNCTION(stomp_abort);
 PHP_FUNCTION(stomp_ack);
 PHP_FUNCTION(stomp_error);
-PHP_FUNCTION(stomp_set_timeout);
-PHP_FUNCTION(stomp_get_timeout);
+PHP_FUNCTION(stomp_set_read_timeout);
+PHP_FUNCTION(stomp_get_read_timeout);
 
 PHP_METHOD(stompframe, __construct);
 
 ZEND_BEGIN_MODULE_GLOBALS(stomp)
     char *default_broker;
-    long timeout_sec;
-    long timeout_usec;
+    long read_timeout_sec;
+    long read_timeout_usec;
+    long connection_timeout_sec;
+    long connection_timeout_usec;
 ZEND_END_MODULE_GLOBALS(stomp)
 
 #ifdef ZTS

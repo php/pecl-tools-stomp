@@ -131,10 +131,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(stomp_transaction_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, transaction_id)
+ZEND_ARG_ARRAY_INFO(0, properties, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_oop_transaction_args, 0, 0, 1)
 ZEND_ARG_INFO(0, transaction_id)
+ZEND_ARG_ARRAY_INFO(0, properties, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_ack_args, 0, 0, 2)
@@ -148,16 +150,22 @@ ZEND_ARG_INFO(0, msg)
 ZEND_ARG_ARRAY_INFO(0, properties, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(stomp_set_timeout_args, 0, 0, 2)
+ZEND_BEGIN_ARG_INFO_EX(stomp_set_read_timeout_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, seconds)
 ZEND_ARG_INFO(0, microseconds)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(stomp_oop_set_timeout_args, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(stomp_oop_set_read_timeout_args, 0, 0, 1)
 ZEND_ARG_INFO(0, seconds)
 ZEND_ARG_INFO(0, microseconds)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(stomp_frame_construct_args, 0, 0, 0)
+ZEND_ARG_INFO(0, command)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
+ZEND_ARG_INFO(0, body)
+ZEND_END_ARG_INFO()    
 /* }}} */
 
 /* {{{ stomp_functions */
@@ -176,8 +184,8 @@ zend_function_entry stomp_functions[] = {
     PHP_FE(stomp_abort,             stomp_transaction_args)
     PHP_FE(stomp_ack,               stomp_ack_args)
     PHP_FE(stomp_error,             stomp_link_only)
-    PHP_FE(stomp_set_timeout,       stomp_set_timeout_args)
-    PHP_FE(stomp_get_timeout,       stomp_link_only)
+    PHP_FE(stomp_set_read_timeout,  stomp_set_read_timeout_args)
+    PHP_FE(stomp_get_read_timeout,  stomp_link_only)
     {NULL, NULL, NULL}
 };
 /* }}} */
@@ -197,15 +205,15 @@ static zend_function_entry stomp_methods[] = {
     PHP_FALIAS(abort,           stomp_abort,             stomp_oop_transaction_args)
     PHP_FALIAS(ack,             stomp_ack,               stomp_oop_ack_args)
     PHP_FALIAS(error,           stomp_error,             stomp_no_args)
-    PHP_FALIAS(setTimeout,      stomp_set_timeout,       stomp_oop_set_timeout_args)
-    PHP_FALIAS(getTimeout,      stomp_get_timeout,       stomp_no_args)
+    PHP_FALIAS(setReadTimeout,  stomp_set_read_timeout,  stomp_oop_set_read_timeout_args)
+    PHP_FALIAS(getReadTimeout,  stomp_get_read_timeout,  stomp_no_args)
     {NULL, NULL, NULL}
 };
 /* }}} */
 
 /* {{{ stomp_frame_methods[] */
 static zend_function_entry stomp_frame_methods[] = {
-    PHP_ME(stompframe, __construct, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(stompframe, __construct, stomp_frame_construct_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 /* }}} */ 
@@ -235,16 +243,20 @@ zend_module_entry stomp_module_entry = {
 
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("stomp.default_broker", "tcp://localhost:61613", PHP_INI_ALL, OnUpdateString, default_broker, zend_stomp_globals, stomp_globals)
-STD_PHP_INI_ENTRY("stomp.default_timeout_sec", "2", PHP_INI_ALL, OnUpdateLong, timeout_sec, zend_stomp_globals, stomp_globals)
-STD_PHP_INI_ENTRY("stomp.default_timeout_usec", "0", PHP_INI_ALL, OnUpdateLong, timeout_usec, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_read_timeout_sec", "2", PHP_INI_ALL, OnUpdateLong, read_timeout_sec, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_read_timeout_usec", "0", PHP_INI_ALL, OnUpdateLong, read_timeout_usec, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_connection_timeout_sec", "2", PHP_INI_ALL, OnUpdateLong, connection_timeout_sec, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_connection_timeout_usec", "0", PHP_INI_ALL, OnUpdateLong, connection_timeout_usec, zend_stomp_globals, stomp_globals)
 PHP_INI_END()
 
 /* {{{ PHP_GINIT_FUNCTION */
 static PHP_GINIT_FUNCTION(stomp)
 {
     stomp_globals->default_broker = NULL;
-    stomp_globals->timeout_sec = 2;
-    stomp_globals->timeout_usec = 0;
+    stomp_globals->read_timeout_sec = 2;
+    stomp_globals->read_timeout_usec = 0;
+    stomp_globals->connection_timeout_sec = 2;
+    stomp_globals->connection_timeout_usec = 0;
 }
 /* }}} */
 
@@ -416,7 +428,7 @@ PHP_FUNCTION(stomp_connect)
         }
     }
 
-    stomp = stomp_new(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(timeout_sec), STOMP_G(timeout_usec) TSRMLS_CC);
+    stomp = stomp_new(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(read_timeout_sec), STOMP_G(read_timeout_usec) TSRMLS_CC);
     php_url_free(url_parts);
 
 #if HAVE_STOMP_SSL
@@ -807,16 +819,17 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
     int transaction_id_length = 0;
     stomp_frame_t frame = {0}; 
     int success = 0;
+    zval *properties = NULL;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &transaction_id, &transaction_id_length) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &transaction_id, &transaction_id_length, &properties) == FAILURE) {
             return;
         } 
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|s", &arg, &transaction_id, &transaction_id_length) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a", &arg, &transaction_id, &transaction_id_length, &properties) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -826,6 +839,11 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 
     if (transaction_id_length > 0) { 
         zend_hash_add(frame.headers, "transaction", sizeof("transaction"), transaction_id, transaction_id_length + 1, NULL);
+    }
+
+    /* Translate a PHP array to a stomp_header array */
+    if (NULL != properties) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
     }
 
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
@@ -938,7 +956,7 @@ PHP_FUNCTION(stomp_error)
 
 /* {{{ proto void Stomp::setTimeout(int seconds [, int microseconds])
    Set the timeout */
-PHP_FUNCTION(stomp_set_timeout)
+PHP_FUNCTION(stomp_set_read_timeout)
 {
     zval *stomp_object = getThis();
     stomp_t *stomp = NULL;
@@ -957,14 +975,14 @@ PHP_FUNCTION(stomp_set_timeout)
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
     }
 
-    stomp->timeout_sec = sec;
-    stomp->timeout_usec = sec;
+    stomp->read_timeout_sec = sec;
+    stomp->read_timeout_usec = usec;
 }
 /* }}} */
 
 /* {{{ proto array Stomp::getTimeout() 
    Get the timeout */
-PHP_FUNCTION(stomp_get_timeout)
+PHP_FUNCTION(stomp_get_read_timeout)
 {
     zval *stomp_object = getThis();
     stomp_t *stomp = NULL;
@@ -980,8 +998,8 @@ PHP_FUNCTION(stomp_get_timeout)
     }
 
     array_init(return_value);
-    add_assoc_long_ex(return_value, "sec", sizeof("sec"), stomp->timeout_sec);
-    add_assoc_long_ex(return_value, "usec", sizeof("usec"), stomp->timeout_usec);
+    add_assoc_long_ex(return_value, "sec", sizeof("sec"), stomp->read_timeout_sec);
+    add_assoc_long_ex(return_value, "usec", sizeof("usec"), stomp->read_timeout_usec);
 }
 /* }}} */
 

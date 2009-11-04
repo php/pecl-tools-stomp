@@ -29,9 +29,11 @@
 
 #define RETURN_READ_FRAME_FAIL { frame_destroy(f); return NULL; }
 
+ZEND_EXTERN_MODULE_GLOBALS(stomp);
+
 /* {{{ stomp_new
  */
-stomp_t *stomp_new(const char *host, unsigned short port, long timeout_sec, long timeout_usec TSRMLS_DC) 
+stomp_t *stomp_new(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec TSRMLS_DC) 
 {
     /* Memory allocation for the stomp */
     stomp_t *stomp = (stomp_t *) emalloc(sizeof(stomp_t));
@@ -46,8 +48,8 @@ stomp_t *stomp_new(const char *host, unsigned short port, long timeout_sec, long
     stomp->status = 0;
     stomp->error = NULL;
     stomp->errnum = 0;
-    stomp->timeout_sec = timeout_sec;
-    stomp->timeout_usec = timeout_usec;
+    stomp->read_timeout_sec = read_timeout_sec;
+    stomp->read_timeout_usec = read_timeout_usec;
     stomp->session = NULL;
 
 #if HAVE_STOMP_SSL
@@ -82,8 +84,8 @@ int stomp_connect(stomp_t *stomp TSRMLS_DC)
     struct timeval tv;
     fd_set rfds;
 
-    tv.tv_sec = stomp->timeout_sec;
-    tv.tv_usec = stomp->timeout_usec;
+    tv.tv_sec = STOMP_G(connection_timeout_sec);
+    tv.tv_usec = STOMP_G(connection_timeout_usec);
 
     stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0 TSRMLS_CC);
     if (stomp->fd == -1) {
@@ -144,10 +146,10 @@ int stomp_connect(stomp_t *stomp TSRMLS_DC)
 
 /* {{{ stomp_close
  */
-int stomp_close(stomp_t *stomp TSRMLS_DC)
+void stomp_close(stomp_t *stomp TSRMLS_DC)
 {
     if (NULL == stomp) {
-        return 1;
+        return;
     }
 
     if (stomp->fd != -1) {
@@ -169,7 +171,6 @@ int stomp_close(stomp_t *stomp TSRMLS_DC)
     }
 
     efree(stomp);
-    return 1;
 }
 /* }}} */
 
@@ -221,11 +222,17 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 #ifdef HAVE_STOMP_SSL
     if (stomp->use_ssl) {
         if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
+            char error[1024];
+            snprintf(error, sizeof(error), "Unable to send data");
+            stomp_set_error(stomp, error, errno);
             return 0;
         }
     } else {
 #endif        
         if (-1 == send(stomp->fd, buf.c, buf.len, 0) || -1 == send(stomp->fd, "\0\n", 2, 0)) {
+            char error[1024];
+            snprintf(error, sizeof(error), "Unable to send data");
+            stomp_set_error(stomp, error, errno);
             return 0;
         }
 #ifdef HAVE_STOMP_SSL
@@ -498,8 +505,8 @@ int stomp_select(stomp_t *stomp)
     struct timeval tv;
     fd_set rfds;
 
-    tv.tv_sec = stomp->timeout_sec;
-    tv.tv_usec = stomp->timeout_usec;
+    tv.tv_sec = stomp->read_timeout_sec;
+    tv.tv_usec = stomp->read_timeout_usec;
 
     FD_ZERO(&rfds);
     FD_SET(stomp->fd, &rfds);
