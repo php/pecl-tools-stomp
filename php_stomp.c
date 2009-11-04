@@ -613,8 +613,9 @@ PHP_FUNCTION(stomp_send)
             FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
         }
     } else {
-        php_error_docref(NULL TSRMLS_CC, E_ERROR, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-    }
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
+		RETURN_NULL();
+	}
 
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
         success = stomp_valid_receipt(stomp, &frame);
@@ -917,8 +918,9 @@ PHP_FUNCTION(stomp_ack)
             FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
         }
     } else {
-        php_error_docref(NULL TSRMLS_CC, E_ERROR, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-    }
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
+		RETURN_NULL();
+	}
     
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
         success = stomp_valid_receipt(stomp, &frame);
