@@ -426,6 +426,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
             p2 = strstr(p,":");
             
             if (p2 == NULL) {
+                efree(p);
                 RETURN_READ_FRAME_FAIL;
             }
 
