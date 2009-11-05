@@ -12,13 +12,13 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2009-11-01</date>
-    <version><release>0.2.0</release><api>0.2.0</api></version>
+    <date>2009-11-04</date>
+    <version><release>0.3.0</release><api>0.3.0</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Windows build fix (kalle)
-- Add SSL support (pierrick)    
+* stomp_begin, stomp_abort and stomp_commit take a new optional param 
+* new connection timeout and read timeout ini configuration
     </notes>
 
     <contents>
@@ -75,6 +75,16 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>0.2.0</release><api>0.2.0</api></version>
+            <stability><release>beta</release><api>beta</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2009-11-01</date>
+            <notes>
+- Windows build fix (kalle)
+- Add SSL support (pierrick)    
+            </notes>
+        </release>
         <release>
             <version><release>0.1.0</release><api>0.1.0</api></version>
             <stability><release>alpha</release><api>alpha</api></stability>

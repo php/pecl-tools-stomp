@@ -62,11 +62,14 @@ extern zend_module_entry stomp_module_entry;
 
 PHP_MINIT_FUNCTION(stomp);
 PHP_MSHUTDOWN_FUNCTION(stomp);
+PHP_RINIT_FUNCTION(stomp);
+PHP_RSHUTDOWN_FUNCTION(stomp);
 PHP_MINFO_FUNCTION(stomp);
 
 /* Methods declarations */
 PHP_FUNCTION(stomp_version);
 PHP_FUNCTION(stomp_connect);
+PHP_FUNCTION(stomp_connect_error);
 PHP_FUNCTION(stomp_get_session_id);
 PHP_FUNCTION(stomp_close);
 PHP_FUNCTION(stomp_send);
@@ -85,11 +88,16 @@ PHP_FUNCTION(stomp_get_read_timeout);
 PHP_METHOD(stompframe, __construct);
 
 ZEND_BEGIN_MODULE_GLOBALS(stomp)
+    /* INI */
     char *default_broker;
     long read_timeout_sec;
     long read_timeout_usec;
     long connection_timeout_sec;
     long connection_timeout_usec;
+
+    /* Others */
+    long error_no;
+    char *error_msg;
 ZEND_END_MODULE_GLOBALS(stomp)
 
 #ifdef ZTS

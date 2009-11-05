@@ -47,15 +47,15 @@
 #define INIT_FRAME(frame, cmd) INIT_FRAME_L(frame, cmd, sizeof(cmd)-1)
 
 #define FRAME_HEADER_FROM_HASHTABLE(h, p) \
-    HashTable *properties_ht = p; \
+    HashTable *headers_ht = p; \
     zval **value = NULL; \
     char *string_key = NULL; \
     ulong num_key; \
-    zend_hash_internal_pointer_reset(properties_ht); \
-    for (zend_hash_internal_pointer_reset(properties_ht); \
-            zend_hash_get_current_data(properties_ht, (void **)&value) == SUCCESS; \
-            zend_hash_move_forward(properties_ht)) { \
-        if (zend_hash_get_current_key(properties_ht, &string_key, &num_key, 1) != HASH_KEY_IS_STRING) { \
+    zend_hash_internal_pointer_reset(headers_ht); \
+    for (zend_hash_internal_pointer_reset(headers_ht); \
+            zend_hash_get_current_data(headers_ht, (void **)&value) == SUCCESS; \
+            zend_hash_move_forward(headers_ht)) { \
+        if (zend_hash_get_current_key(headers_ht, &string_key, &num_key, 1) != HASH_KEY_IS_STRING) { \
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid argument or parameter array"); \
             break; \
         } else { \
@@ -73,12 +73,15 @@
     efree(frame.headers);
 
 #define STOMP_ERROR(errno, msg, ... ) \
+    STOMP_G(error_no) = errno; \
+    if (STOMP_G(error_msg)) { \
+        efree(STOMP_G(error_msg)); \
+    } \
+    STOMP_G(error_msg) = estrdup(msg); \
     if (stomp_object) { \
         zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, msg, ##__VA_ARGS__); \
-    } else { \
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, msg, ##__VA_ARGS__); \
-    }
- 
+    } 
+
 static int le_stomp;
 
 ZEND_DECLARE_MODULE_GLOBALS(stomp)
@@ -108,46 +111,46 @@ ZEND_BEGIN_ARG_INFO_EX(stomp_send_args, 0, 0, 3)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, destination)
 ZEND_ARG_INFO(0, msg)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_oop_send_args, 0, 0, 2)
 ZEND_ARG_INFO(0, destination)
 ZEND_ARG_INFO(0, msg)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_subscribe_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, destination)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_oop_subscribe_args, 0, 0, 1)
 ZEND_ARG_INFO(0, destination)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_transaction_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, transaction_id)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_oop_transaction_args, 0, 0, 1)
 ZEND_ARG_INFO(0, transaction_id)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_ack_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, msg)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_oop_ack_args, 0, 0, 1)
 ZEND_ARG_INFO(0, msg)
-ZEND_ARG_ARRAY_INFO(0, properties, 1)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_set_read_timeout_args, 0, 0, 2)
@@ -172,6 +175,7 @@ ZEND_END_ARG_INFO()
 zend_function_entry stomp_functions[] = {
     PHP_FE(stomp_version,           stomp_no_args)
     PHP_FE(stomp_connect,           stomp_connect_args)
+    PHP_FE(stomp_connect_error,     stomp_no_args)
     PHP_FE(stomp_get_session_id,    stomp_link_only)
     PHP_FE(stomp_close,             stomp_link_only)
     PHP_FE(stomp_send,              stomp_send_args)
@@ -194,7 +198,7 @@ zend_function_entry stomp_functions[] = {
 static zend_function_entry stomp_methods[] = {
     PHP_FALIAS(__construct,     stomp_connect,           stomp_connect_args)
     PHP_FALIAS(getSessionId,    stomp_get_session_id,    stomp_no_args)
-    PHP_FALIAS(disconnect,      stomp_close,             stomp_no_args)
+    PHP_FALIAS(__destruct,      stomp_close,             stomp_no_args)
     PHP_FALIAS(send,            stomp_send,              stomp_oop_send_args)
     PHP_FALIAS(subscribe,       stomp_subscribe,         stomp_oop_subscribe_args)
     PHP_FALIAS(hasFrame,        stomp_has_frame,         stomp_no_args)
@@ -227,8 +231,8 @@ zend_module_entry stomp_module_entry = {
     stomp_functions,
     PHP_MINIT(stomp),
     PHP_MSHUTDOWN(stomp),
-    NULL,    
-    NULL,
+    PHP_RINIT(stomp),    
+    PHP_RSHUTDOWN(stomp),
     PHP_MINFO(stomp),
 #if ZEND_MODULE_API_NO >= 20010901
     PHP_STOMP_VERSION,
@@ -355,6 +359,27 @@ PHP_MSHUTDOWN_FUNCTION(stomp)
 }
 /* }}} */
 
+/* {{{ PHP_RINIT_FUNCTION */
+PHP_RINIT_FUNCTION(stomp)
+{
+    STOMP_G(error_msg) = NULL;
+    STOMP_G(error_no) = 0;
+
+    return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_RSHUTDOWN_FUNCTION */
+PHP_RSHUTDOWN_FUNCTION(stomp)
+{
+    if (STOMP_G(error_msg)) {
+        efree(STOMP_G(error_msg));
+    }
+
+    return SUCCESS;
+}
+/* }}} */
+
 /* {{{ PHP_MINFO_FUNCTION */
 PHP_MINFO_FUNCTION(stomp)
 {
@@ -458,7 +483,7 @@ PHP_FUNCTION(stomp_connect)
             STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
         } else if (0 != strncmp("CONNECTED", res->command, sizeof("CONNECTED")-1)) {
             if (stomp->error) {
-                STOMP_ERROR(stomp->errnum, "%s", stomp->error);
+                STOMP_ERROR(stomp->errnum, stomp->error);
             } else {
                 STOMP_ERROR(0, PHP_STOMP_ERR_UNKNOWN);
             }
@@ -487,11 +512,23 @@ PHP_FUNCTION(stomp_connect)
             }
         } 
     } else {
-        STOMP_ERROR(0, "%s", stomp->error);
+        STOMP_ERROR(0, stomp->error);
     }
 
     stomp_close(stomp TSRMLS_CC);
     RETURN_FALSE;
+}
+/* }}} */
+
+/* {{{ proto string stomp_connect_error() 
+   Get the last connection error */
+PHP_FUNCTION(stomp_connect_error) 
+{
+    if (STOMP_G(error_msg)) {
+        RETURN_STRING(STOMP_G(error_msg),1);
+    } else {
+        RETURN_NULL();
+    }
 }
 /* }}} */
 
@@ -551,7 +588,7 @@ PHP_FUNCTION(stomp_close)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::send(string destination, mixed msg [, array properties])
+/* {{{ proto boolean Stomp::send(string destination, mixed msg [, array headers])
    Sends a message to a destination in the messaging system */
 PHP_FUNCTION(stomp_send)
 {
@@ -559,19 +596,19 @@ PHP_FUNCTION(stomp_send)
     stomp_t *stomp = NULL;
     char *destination = NULL;
     int destination_length = 0;
-    zval *msg = NULL, *properties = NULL;
+    zval *msg = NULL, *headers = NULL;
     stomp_frame_t frame = {0}; 
     int success = 0;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|a!", &destination, &destination_length, &msg, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|a!", &destination, &destination_length, &msg, &headers) == FAILURE) {
             return;
         } 
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsz|a!", &arg, &destination, &destination_length, &msg, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsz|a!", &arg, &destination, &destination_length, &msg, &headers) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -579,15 +616,15 @@ PHP_FUNCTION(stomp_send)
 
     /* Verify destination */
     if (0 == destination_length) {
-        STOMP_ERROR(0, PHP_STOMP_ERR_EMPTY_DESTINATION);
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, PHP_STOMP_ERR_EMPTY_DESTINATION);
         RETURN_FALSE;
     }
 
     INIT_FRAME(frame, "SEND");
     
     /* Translate a PHP array to a stomp_header array */
-    if (NULL != properties) {
-        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
+    if (NULL != headers) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
     }
 
     /* Add the destination */
@@ -626,7 +663,7 @@ PHP_FUNCTION(stomp_send)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::subscribe(string destination [, array properties])
+/* {{{ proto boolean Stomp::subscribe(string destination [, array headers])
    Register to listen to a given destination */
 PHP_FUNCTION(stomp_subscribe)
 {
@@ -634,19 +671,19 @@ PHP_FUNCTION(stomp_subscribe)
     stomp_t *stomp = NULL;
     char *destination = NULL;
     int destination_length = 0;
-    zval *properties = NULL;
+    zval *headers = NULL;
     stomp_frame_t frame = {0}; 
     int success = 0;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &destination, &destination_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &destination, &destination_length, &headers) == FAILURE) {
             return;
         }
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &headers) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -654,15 +691,15 @@ PHP_FUNCTION(stomp_subscribe)
 
     /* Verify destination */
     if (0 == destination_length) {
-        STOMP_ERROR(0, PHP_STOMP_ERR_EMPTY_DESTINATION);
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, PHP_STOMP_ERR_EMPTY_DESTINATION);
         RETURN_FALSE;
     }
 
     INIT_FRAME(frame, "SUBSCRIBE");
      
     /* Translate a PHP array to a stomp_header array */
-    if (NULL != properties) {
-        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
+    if (NULL != headers) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
     }
 
     /* Add the destination */
@@ -679,7 +716,7 @@ PHP_FUNCTION(stomp_subscribe)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::unsubscribe(string destination [, array properties])
+/* {{{ proto boolean Stomp::unsubscribe(string destination [, array headers])
    Remove an existing subscription */
 PHP_FUNCTION(stomp_unsubscribe)
 {
@@ -687,19 +724,19 @@ PHP_FUNCTION(stomp_unsubscribe)
     stomp_t *stomp = NULL;
     char *destination = NULL;
     int destination_length = 0;
-    zval *properties = NULL;
+    zval *headers = NULL;
     stomp_frame_t frame = {0}; 
     int success = 0;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &destination, &destination_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &destination, &destination_length, &headers) == FAILURE) {
             return;
         }
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &headers) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -707,15 +744,15 @@ PHP_FUNCTION(stomp_unsubscribe)
 
     /* Verify destination */
     if (0 == destination_length) {
-        STOMP_ERROR(0, PHP_STOMP_ERR_EMPTY_DESTINATION);
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, PHP_STOMP_ERR_EMPTY_DESTINATION);
         RETURN_FALSE;
     }
 
     INIT_FRAME(frame, "UNSUBSCRIBE");
      
     /* Translate a PHP array to a stomp_header array */
-    if (NULL != properties) {
-        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
+    if (NULL != headers) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
     }
 
     /* Add the destination */
@@ -820,17 +857,17 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
     int transaction_id_length = 0;
     stomp_frame_t frame = {0}; 
     int success = 0;
-    zval *properties = NULL;
+    zval *headers = NULL;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &transaction_id, &transaction_id_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &transaction_id, &transaction_id_length, &headers) == FAILURE) {
             return;
         } 
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a", &arg, &transaction_id, &transaction_id_length, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a", &arg, &transaction_id, &transaction_id_length, &headers) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -843,8 +880,8 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
     }
 
     /* Translate a PHP array to a stomp_header array */
-    if (NULL != properties) {
-        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
+    if (NULL != headers) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
     }
 
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
@@ -856,7 +893,7 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::begin([string transactionId])
+/* {{{ proto boolean Stomp::begin(string transactionId [, array headers ])
    Start a transaction */
 PHP_FUNCTION(stomp_begin)
 {
@@ -864,7 +901,7 @@ PHP_FUNCTION(stomp_begin)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::commit([string transactionId])
+/* {{{ proto boolean Stomp::commit(string transactionId [, array headers ])
    Commit a transaction in progress */
 PHP_FUNCTION(stomp_commit)
 {
@@ -872,7 +909,7 @@ PHP_FUNCTION(stomp_commit)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::abort([string transactionId])
+/* {{{ proto boolean Stomp::abort(string transactionId [, array headers ])
    Rollback a transaction in progress */
 PHP_FUNCTION(stomp_abort)
 {
@@ -880,25 +917,25 @@ PHP_FUNCTION(stomp_abort)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::ack(mixed msg [, array properties])
+/* {{{ proto boolean Stomp::ack(mixed msg [, array headers])
    Acknowledge consumption of a message from a subscription using client acknowledgment */
 PHP_FUNCTION(stomp_ack)
 {
     zval *stomp_object = getThis();
-    zval *msg = NULL, *properties = NULL;
+    zval *msg = NULL, *headers = NULL;
     stomp_t *stomp = NULL;
     stomp_frame_t frame = {0}; 
     int success = 0;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a!", &msg, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a!", &msg, &headers) == FAILURE) {
             return;
         } 
         FETCH_STOMP_OBJECT;
     } else {
         zval *arg = NULL;
-        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz|a!", &arg, &msg, &properties) == FAILURE) {
+        if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz|a!", &arg, &msg, &headers) == FAILURE) {
             return;
         }
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
@@ -906,8 +943,8 @@ PHP_FUNCTION(stomp_ack)
 
     INIT_FRAME(frame, "ACK");
 
-    if (NULL != properties) {
-        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(properties));
+    if (NULL != headers) {
+        FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
     }
 
     if (Z_TYPE_P(msg) == IS_STRING) {
