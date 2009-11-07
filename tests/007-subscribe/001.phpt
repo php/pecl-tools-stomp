@@ -1,21 +1,17 @@
 --TEST--
-Check stomp_subscribe
+Test Stomp::subscribe()
 --SKIPIF--
 <?php 
     if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect("tcp://localhost:61613")) print "skip";
+    if (!stomp_connect()) print "skip";
 ?>
 --FILE--
 <?php 
-$s = new Stomp('tcp://localhost:61613');
-try {
-    $s->subscribe('', array());
-} catch(StompException $e) {
-    echo $e->getMessage();
-}
-
+$s = new Stomp();
+$s->subscribe('', array());
 $s->subscribe('/queue/test', 'string');
 ?>
 --EXPECTF--
-Destination can not be empty
+Warning: Stomp::subscribe(): Destination can not be empty in %s on line %d
+
 Catchable fatal error: Argument 2 passed to Stomp::subscribe() must be an array, string given in %s on line %d

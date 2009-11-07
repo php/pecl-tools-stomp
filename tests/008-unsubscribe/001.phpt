@@ -1,21 +1,17 @@
 --TEST--
-Check stomp_unsubscribe
+Test Stomp::unsubscribe()
 --SKIPIF--
 <?php 
     if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect("tcp://localhost:61613")) print "skip";
+    if (!stomp_connect()) print "skip";
 ?>
 --FILE--
 <?php 
-$s = new Stomp('tcp://localhost:61613');
-try {
-    $s->unsubscribe('', array());
-} catch(StompException $e) {
-    echo $e->getMessage();
-}
-
+$s = new Stomp();
+$s->unsubscribe('', array());
 $s->unsubscribe('/queue/test', 'string');
 ?>
 --EXPECTF--
-Destination can not be empty
+Warning: Stomp::unsubscribe(): Destination can not be empty in %s on line %d
+
 Catchable fatal error: Argument 2 passed to Stomp::unsubscribe() must be an array, string given in %s on line %d

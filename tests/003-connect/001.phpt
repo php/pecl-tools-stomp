@@ -1,19 +1,20 @@
 --TEST--
-Check stomp_connect
+Test stomp_connect() - URI validation
 --SKIPIF--
 <?php if (!extension_loaded("stomp")) print "skip"; ?>
 --FILE--
 <?php 
-stomp_connect('');
-stomp_connect(1);
-stomp_connect('foo');
-stomp_connect('foo://bar');
+var_dump(stomp_connect(''), stomp_connect_error());
+var_dump(stomp_connect(1), stomp_connect_error());
+var_dump(stomp_connect('foo'), stomp_connect_error());
+var_dump(stomp_connect('foo://bar'), stomp_connect_error());
 ?>
---EXPECTF--
-Warning: stomp_connect(): Invalid Broker URI in %s on line %d
-
-Warning: stomp_connect(): Invalid Broker URI in %s on line %d
-
-Warning: stomp_connect(): Invalid Broker URI in %s on line %d
-
-Warning: stomp_connect(): Invalid Broker URI scheme in %s on line %d
+--EXPECT--
+NULL
+string(18) "Invalid Broker URI"
+NULL
+string(18) "Invalid Broker URI"
+NULL
+string(18) "Invalid Broker URI"
+NULL
+string(25) "Invalid Broker URI scheme"

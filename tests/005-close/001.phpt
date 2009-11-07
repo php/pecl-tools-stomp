@@ -1,14 +1,12 @@
 --TEST--
-Check stomp_close
+Test stomp_close() - tests parameters
 --SKIPIF--
 <?php 
     if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect("tcp://localhost:61613")) print "skip";
 ?>
 --FILE--
 <?php 
-$s = stomp_connect("tcp://localhost:61613");
-if(stomp_close($s)) echo "close";
+stomp_close(null);
 ?>
---EXPECT--
-close
+--EXPECTF--
+Warning: stomp_close() expects parameter 1 to be resource, null given in %s on line %d

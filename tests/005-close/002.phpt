@@ -1,5 +1,5 @@
 --TEST--
-Test stomp_get_session_id()
+Test stomp_close()
 --SKIPIF--
 <?php 
     if (!extension_loaded("stomp")) print "skip"; 
@@ -8,7 +8,9 @@ Test stomp_get_session_id()
 --FILE--
 <?php 
 $link = stomp_connect();
-var_dump(stomp_get_session_id($link));
+if($link) echo "success" . PHP_EOL;
+if(stomp_close($link)) echo "closed";
 ?>
---EXPECTF--
-string(%d) "%s"
+--EXPECT--
+success
+closed
