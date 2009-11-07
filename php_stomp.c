@@ -651,8 +651,9 @@ PHP_FUNCTION(stomp_send)
         }
     } else {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-		RETURN_FALSE;
-	}
+        CLEAR_FRAME(frame);
+        RETURN_FALSE;
+    }
 
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
         success = stomp_valid_receipt(stomp, &frame);
@@ -956,8 +957,9 @@ PHP_FUNCTION(stomp_ack)
         }
     } else {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-		RETURN_FALSE;
-	}
+        CLEAR_FRAME(frame);
+        RETURN_FALSE;
+    }
     
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
         success = stomp_valid_receipt(stomp, &frame);
@@ -999,7 +1001,7 @@ PHP_FUNCTION(stomp_set_read_timeout)
 {
     zval *stomp_object = getThis();
     stomp_t *stomp = NULL;
-    long sec, usec;
+    long sec = 0, usec = 0;
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
         if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l", &sec, &usec) == FAILURE) {
