@@ -562,7 +562,7 @@ PHP_FUNCTION(stomp_get_session_id)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::disconnect()
+/* {{{ proto boolean Stomp::__destruct()
    Close stomp connection */
 PHP_FUNCTION(stomp_close)
 {
@@ -651,7 +651,7 @@ PHP_FUNCTION(stomp_send)
         }
     } else {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-		RETURN_NULL();
+		RETURN_FALSE;
 	}
 
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
@@ -956,7 +956,7 @@ PHP_FUNCTION(stomp_ack)
         }
     } else {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Expects parameter %d to be a string or a StompFrame object.", stomp_object?2:3);
-		RETURN_NULL();
+		RETURN_FALSE;
 	}
     
     if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {

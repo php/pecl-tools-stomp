@@ -12,13 +12,16 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2009-11-04</date>
+    <date>2009-11-06</date>
     <version><release>0.3.0</release><api>0.3.0</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-* stomp_begin, stomp_abort and stomp_commit take a new optional param 
-* new connection timeout and read timeout ini configuration
+* new stomp_connect_error() function (pierrick)
+* stomp_begin, stomp_abort and stomp_commit now accept additional headers (pierrick)
+* new connection timeout and read timeout ini configuration (pierrick)
+* Fix a memory leak in stomp_read_line (pierrick)    
+* Better set of test (Pierrick and Anis)    
     </notes>
 
     <contents>
@@ -31,24 +34,26 @@ This extension allows php applications to communicate with any Stomp compliant M
             <file role="src" name="php_stomp.h" />
             <file role="src" name="stomp.c" />
             <file role="src" name="stomp.h" />
-            <dir name="tests">
-                <file role="test" name="001-stomp.phpt" />
-                <file role="test" name="002-version.phpt" />
-                <file role="test" name="003-connect/001.phpt" />
-                <file role="test" name="004-getSessionId/001.phpt" />
-                <file role="test" name="005-close/001.phpt" />
-                <file role="test" name="006-send/001.phpt" />
-                <file role="test" name="007-subscribe/001.phpt" />
-                <file role="test" name="008-unsubscribe/001.phpt" />
-            </dir>
-            <dir name="doc">
-                <file role="doc" name="classes.php" />
-                <file role="doc" name="functions.php" />
-            </dir>
-            <dir name="examples">
-                <file role="doc" name="oop.php" />
-                <file role="doc" name="procedural.php" />
-            </dir>
+            <file role="test" name="tests/001-stomp.phpt" />
+            <file role="test" name="tests/002-version.phpt" />
+            <file role="test" name="tests/003-connect/001.phpt" />
+            <file role="test" name="tests/003-connect/002.phpt" />
+            <file role="test" name="tests/004-getSessionId/001.phpt" />
+            <file role="test" name="tests/005-close/001.phpt" />
+            <file role="test" name="tests/005-close/002.phpt" />
+            <file role="test" name="tests/006-send/001.phpt" />
+            <file role="test" name="tests/006-send/002.phpt" />
+            <file role="test" name="tests/007-subscribe/001.phpt" />
+            <file role="test" name="tests/008-unsubscribe/001.phpt" />
+            <file role="test" name="tests/009-readFrame/001.phpt" />
+            <file role="test" name="tests/009-readFrame/002.phpt" />
+            <file role="test" name="tests/010-timeout/001.phpt" />
+            <file role="test" name="tests/010-timeout/002.phpt" />
+            <file role="test" name="tests/011-commit/001.phpt" />
+            <file role="doc" name="doc/classes.php" />
+            <file role="doc" name="doc/functions.php" />
+            <file role="doc" name="examples/oop.php" />
+            <file role="doc" name="examples/procedural.php" />
         </dir>
     </contents>
 
