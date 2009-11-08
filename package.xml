@@ -12,16 +12,13 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2009-11-06</date>
-    <version><release>0.3.0</release><api>0.3.0</api></version>
+    <date>2009-11-08</date>
+    <version><release>0.3.1</release><api>0.3.1</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-* new stomp_connect_error() function (pierrick)
-* stomp_begin, stomp_abort and stomp_commit now accept additional headers (pierrick)
-* new connection timeout and read timeout ini configuration (pierrick)
-* Fix a memory leak in stomp_read_line (pierrick)    
-* Better set of test (Pierrick and Anis)    
+- Fix memory leak in stomp_send and in stomp_ack
+- Reduced minimum php version to 5.2.2
     </notes>
 
     <contents>
@@ -60,7 +57,7 @@ This extension allows php applications to communicate with any Stomp compliant M
     <dependencies>
         <required>
             <php>
-                <min>5.2.10</min>
+                <min>5.2.2</min>
             </php>
             <pearinstaller>
                 <min>1.4.0</min>
@@ -80,6 +77,19 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>0.3.0</release><api>0.3.0</api></version>
+            <stability><release>beta</release><api>beta</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2009-11-06</date>
+            <notes>
+- new stomp_connect_error() function (pierrick)
+- stomp_begin, stomp_abort and stomp_commit now accept additional headers (pierrick)
+- new connection timeout and read timeout ini configuration (pierrick)
+- Fix a memory leak in stomp_read_line (pierrick)    
+- Better set of test (Pierrick and Anis)    
+            </notes>
+        </release>
         <release>
             <version><release>0.2.0</release><api>0.2.0</api></version>
             <stability><release>beta</release><api>beta</api></stability>
