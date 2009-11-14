@@ -23,6 +23,7 @@
 #endif
 
 #include "php.h"
+#include "zend_exceptions.h"
 #include "ext/standard/php_smart_str.h"
 #include "stomp.h"
 #include "php_stomp.h"
@@ -30,6 +31,7 @@
 #define RETURN_READ_FRAME_FAIL { frame_destroy(f); return NULL; }
 
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
+extern stomp_ce_exception;
 
 /* {{{ stomp_new
  */
@@ -249,15 +251,23 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
  */
 int stomp_recv(stomp_t *stomp, char *msg, size_t length)
 {
+	int len;
 #if HAVE_STOMP_SSL
     if(stomp->use_ssl) {
-        return SSL_read(stomp->ssl_handle, msg, length);
+        len = SSL_read(stomp->ssl_handle, msg, length);
     } else {
 #endif
-        return recv(stomp->fd, msg, length, 0);
+        len = recv(stomp->fd, msg, length, 0);
 #if HAVE_STOMP_SSL
     }
-#endif    
+#endif
+
+    if (len == 0) {
+		TSRMLS_FETCH();
+		zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, "Unexpected EOF while reading from socket");
+        stomp->status = -1;
+    }
+    return len;
 }
 /* }}} */
 

@@ -796,6 +796,7 @@ PHP_FUNCTION(stomp_read_frame)
     zval *stomp_object = getThis();
     stomp_t *stomp = NULL;
     stomp_frame_t *res = NULL;
+    int sel_res = 0;
 
     if (stomp_object) {
         stomp_object_t *i_obj = NULL;
@@ -808,7 +809,7 @@ PHP_FUNCTION(stomp_read_frame)
         ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp);
     }
 
-    if (stomp_select(stomp) > 0 && (res = stomp_read_frame(stomp))) {
+    if ((sel_res = stomp_select(stomp)) > 0 && (res = stomp_read_frame(stomp))) {
         zval *headers = NULL;
 
         if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
@@ -855,6 +856,9 @@ PHP_FUNCTION(stomp_read_frame)
 
         frame_destroy(res);
     } else {
+        if (sel_res == -1) {
+            STOMP_ERROR(0, "Error while selecting from socket: %d", errno);
+        }
         RETURN_FALSE;
     }
 }
