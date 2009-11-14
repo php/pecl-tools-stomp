@@ -462,15 +462,6 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
         f->body_length = stomp_read_buffer(stomp, &f->body);
     }
 
-    if (0 == strncmp("ERROR", f->command, sizeof("ERROR") - 1)) {
-        char *error_msg = NULL;
-        if (zend_hash_find(f->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-            stomp_set_error(stomp, error_msg, 0); 
-        }
-        frame_destroy(f);
-        return NULL;
-    }
-
     return f;
 }
 /* }}} */
@@ -491,7 +482,12 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
                         && !strcmp(receipt, receipt_id)) {
                     success = 1;
                 }
-            } 
+            } else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
+                char *error_msg = NULL;
+                if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
+                    stomp_set_error(stomp, error_msg, 0); 
+                }
+            }
             frame_destroy(res);
         }
     }

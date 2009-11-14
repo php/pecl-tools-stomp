@@ -810,6 +810,16 @@ PHP_FUNCTION(stomp_read_frame)
 
     if (stomp_select(stomp) > 0 && (res = stomp_read_frame(stomp))) {
         zval *headers = NULL;
+
+        if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
+            char *error_msg = NULL;
+            if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
+                STOMP_ERROR(0, error_msg)
+                frame_destroy(res);
+                RETURN_FALSE;
+            }
+        }
+	
         MAKE_STD_ZVAL(headers);
         array_init(headers);
         if (res->headers) {
