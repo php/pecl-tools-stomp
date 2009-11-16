@@ -277,6 +277,7 @@ static int stomp_read_buffer(stomp_t *stomp, char **data)
 {
     int rc = 0;
     size_t i = 0;
+    size_t bufsize = STOMP_BUFSIZE + 1;
     char *buffer = (char *) emalloc(STOMP_BUFSIZE + 1);
 
     while (1) {
@@ -300,8 +301,9 @@ static int stomp_read_buffer(stomp_t *stomp, char **data)
                 break;
             }
 
-            if (i >= sizeof(buffer)) {
-                buffer = (char *) erealloc(buffer, sizeof(buffer) + STOMP_BUFSIZE);
+            if (i >= bufsize) {
+                buffer = (char *) erealloc(buffer, bufsize + STOMP_BUFSIZE);
+                bufsize += STOMP_BUFSIZE;
             }
 
         }
@@ -329,6 +331,7 @@ static int stomp_read_line(stomp_t *stomp, char **data)
 {
     int rc = 0;
     size_t i = 0;
+    size_t bufsize = STOMP_BUFSIZE + 1;
     char *buffer = (char *) emalloc(STOMP_BUFSIZE + 1);
 
     while (1) {
@@ -351,8 +354,9 @@ static int stomp_read_line(stomp_t *stomp, char **data)
                 return 0;
             }
 
-            if (i >= sizeof(buffer)) {
-                buffer = (char *) erealloc(buffer, sizeof(buffer) + STOMP_BUFSIZE);
+            if (i >= bufsize) {
+                buffer = (char *) erealloc(buffer, bufsize + STOMP_BUFSIZE);
+                bufsize += STOMP_BUFSIZE;
             }
         }
 
