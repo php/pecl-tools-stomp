@@ -12,13 +12,14 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2009-11-08</date>
-    <version><release>0.3.1</release><api>0.3.1</api></version>
+    <date>2009-11-22</date>
+    <version><release>0.3.2</release><api>0.3.2</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Fix memory leak in stomp_send and in stomp_ack
-- Reduced minimum php version to 5.2.2
+- Fixed bug #16936 (Module segfaults on readFrame if Frame > STOMP_BUFSIZE)
+- Fixed bug #16933 (readFrame does not notice when server shuts down)
+- Fixed bug #16930 (readFrame reports error-frames as "timeout")    
     </notes>
 
     <contents>
@@ -77,6 +78,16 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>0.3.1</release><api>0.3.1</api></version>
+            <stability><release>beta</release><api>beta</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2009-11-08</date>
+            <notes>
+- Fix memory leak in stomp_send and in stomp_ack
+- Reduced minimum php version to 5.2.2
+            </notes>
+        </release>
         <release>
             <version><release>0.3.0</release><api>0.3.0</api></version>
             <stability><release>beta</release><api>beta</api></stability>
