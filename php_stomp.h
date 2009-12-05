@@ -24,8 +24,8 @@
 #include "stomp.h"
 
 typedef struct _stomp_object {
-    zend_object std;
-    stomp_t *stomp;
+	zend_object std;
+	stomp_t *stomp;
 } stomp_object_t; 
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
@@ -88,16 +88,16 @@ PHP_FUNCTION(stomp_get_read_timeout);
 PHP_METHOD(stompframe, __construct);
 
 ZEND_BEGIN_MODULE_GLOBALS(stomp)
-    /* INI */
-    char *default_broker;
-    long read_timeout_sec;
-    long read_timeout_usec;
-    long connection_timeout_sec;
-    long connection_timeout_usec;
+	/* INI */
+	char *default_broker;
+	long read_timeout_sec;
+	long read_timeout_usec;
+	long connection_timeout_sec;
+	long connection_timeout_usec;
 
-    /* Others */
-    long error_no;
-    char *error_msg;
+	/* Others */
+	long error_no;
+	char *error_msg;
 ZEND_END_MODULE_GLOBALS(stomp)
 
 #ifdef ZTS

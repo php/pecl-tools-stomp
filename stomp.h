@@ -30,34 +30,34 @@
 #define STOMP_BUFSIZE 4096
 
 #define INIT_STOMP_FRAME(f) \
-    f = (stomp_frame_t *) emalloc(sizeof(stomp_frame_t)); \
-    f->command = NULL; f->body = NULL; \
-    ALLOC_HASHTABLE(f->headers); \
-    zend_hash_init(f->headers, 0, NULL, NULL, 0);
+	f = (stomp_frame_t *) emalloc(sizeof(stomp_frame_t)); \
+	f->command = NULL; f->body = NULL; \
+	ALLOC_HASHTABLE(f->headers); \
+	zend_hash_init(f->headers, 0, NULL, NULL, 0);
 
 typedef struct _stomp {
-    php_socket_t fd;    
-    php_sockaddr_storage localaddr;
-    char *host;
-    unsigned short port;
-    int status;
-    char *error;
-    int errnum;
-    long read_timeout_sec;
-    long read_timeout_usec;
-    char *session;
+	php_socket_t fd;    
+	php_sockaddr_storage localaddr;
+	char *host;
+	unsigned short port;
+	int status;
+	char *error;
+	int errnum;
+	long read_timeout_sec;
+	long read_timeout_usec;
+	char *session;
 #if HAVE_STOMP_SSL
-    SSL *ssl_handle;
-    int use_ssl;
+	SSL *ssl_handle;
+	int use_ssl;
 #endif
 } stomp_t;
 
 typedef struct _stomp_frame {
-    char *command;
-    int command_length;
-    HashTable *headers;
-    char *body;
-    int body_length;
+	char *command;
+	int command_length;
+	HashTable *headers;
+	char *body;
+	int body_length;
 } stomp_frame_t;
 
 stomp_t *stomp_new(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec TSRMLS_DC);
