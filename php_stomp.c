@@ -453,7 +453,7 @@ PHP_FUNCTION(stomp_connect)
 		}
 	}
 
-	stomp = stomp_new(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(read_timeout_sec), STOMP_G(read_timeout_usec) TSRMLS_CC);
+	stomp = stomp_new(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(read_timeout_sec), STOMP_G(read_timeout_usec));
 	php_url_free(url_parts);
 
 #if HAVE_STOMP_SSL
