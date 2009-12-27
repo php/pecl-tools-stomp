@@ -68,7 +68,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *connection);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);
 int stomp_select(stomp_t *connection);
 void stomp_set_error(stomp_t *stomp, const char *error, int errnum);
-void frame_destroy(stomp_frame_t *frame);
+void stomp_free_frame(stomp_frame_t *frame);
 #endif /* _STOMP_H_ */
 
 /*

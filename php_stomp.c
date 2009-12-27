@@ -497,7 +497,7 @@ PHP_FUNCTION(stomp_connect)
 				stomp->session = estrdup(key);
 			}
 
-			frame_destroy(res);
+			stomp_free_frame(res);
 
 			if (!stomp_object) {
 				ZEND_REGISTER_RESOURCE(return_value, stomp, le_stomp);
@@ -816,7 +816,7 @@ PHP_FUNCTION(stomp_read_frame)
 			char *error_msg = NULL;
 			if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
 				STOMP_ERROR(0, error_msg)
-				frame_destroy(res);
+				stomp_free_frame(res);
 				RETURN_FALSE;
 			}
 		}
@@ -854,7 +854,7 @@ PHP_FUNCTION(stomp_read_frame)
 			add_assoc_zval_ex(return_value, "headers", sizeof("headers"), headers);
 		}
 
-		frame_destroy(res);
+		stomp_free_frame(res);
 	} else {
 		if (sel_res == -1) {
 			STOMP_ERROR(0, "Error while selecting from socket: %d", errno);

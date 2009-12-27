@@ -28,7 +28,7 @@
 #include "stomp.h"
 #include "php_stomp.h"
 
-#define RETURN_READ_FRAME_FAIL { frame_destroy(f); return NULL; }
+#define RETURN_READ_FRAME_FAIL { stomp_free_frame(f); return NULL; }
 
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
 extern zend_class_entry *stomp_ce_exception;
@@ -378,9 +378,9 @@ static int stomp_read_line(stomp_t *stomp, char **data)
 }
 /* }}} */
 
-/* {{{ frame_destroy
+/* {{{ stomp_free_frame
  */
-void frame_destroy(stomp_frame_t *frame)
+void stomp_free_frame(stomp_frame_t *frame)
 {
 	if (frame) {
 		if (frame->command) {
@@ -502,7 +502,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 					stomp_set_error(stomp, error_msg, 0); 
 				}
 			}
-			frame_destroy(res);
+			stomp_free_frame(res);
 		}
 	}
 	return success;
