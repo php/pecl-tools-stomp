@@ -31,7 +31,7 @@
 #define RETURN_READ_FRAME_FAIL { frame_destroy(f); return NULL; }
 
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
-extern stomp_ce_exception;
+extern zend_class_entry *stomp_ce_exception;
 
 /* {{{ stomp_new
  */
