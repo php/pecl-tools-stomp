@@ -33,9 +33,9 @@
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
 extern zend_class_entry *stomp_ce_exception;
 
-/* {{{ stomp_new
+/* {{{ stomp_init
  */
-stomp_t *stomp_new(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec) 
+stomp_t *stomp_init(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec) 
 {
 	/* Memory allocation for the stomp */
 	stomp_t *stomp = (stomp_t *) emalloc(sizeof(stomp_t));
