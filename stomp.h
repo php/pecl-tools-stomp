@@ -62,7 +62,7 @@ typedef struct _stomp_frame {
 
 stomp_t *stomp_new(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec);
 int stomp_connect(stomp_t *stomp TSRMLS_DC);
-void stomp_close(stomp_t *stomp TSRMLS_DC);
+void stomp_close(stomp_t *stomp);
 int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
 stomp_frame_t *stomp_read_frame(stomp_t *connection);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);

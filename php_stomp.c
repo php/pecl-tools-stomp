@@ -284,7 +284,7 @@ static void php_destroy_stomp_res(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
 	stomp_t *stomp = (stomp_t *) rsrc->ptr;
 	stomp_send_disconnect(stomp TSRMLS_CC);
-	stomp_close(stomp TSRMLS_CC);
+	stomp_close(stomp);
 } 
 
 static void stomp_object_free_storage(stomp_object_t *intern TSRMLS_DC)
@@ -292,7 +292,7 @@ static void stomp_object_free_storage(stomp_object_t *intern TSRMLS_DC)
 	zend_object_std_dtor(&intern->std TSRMLS_CC);
 	if (intern->stomp) {
 		stomp_send_disconnect(intern->stomp TSRMLS_CC);
-		stomp_close(intern->stomp TSRMLS_CC);
+		stomp_close(intern->stomp);
 	}
 	efree(intern);
 }
@@ -505,7 +505,7 @@ PHP_FUNCTION(stomp_connect)
 			} else {
 				stomp_object_t *i_obj = (stomp_object_t *) zend_object_store_get_object(stomp_object TSRMLS_CC);
 				if (i_obj->stomp) {
-					stomp_close(i_obj->stomp TSRMLS_CC);
+					stomp_close(i_obj->stomp);
 				}
 				i_obj->stomp = stomp;
 				RETURN_TRUE;
@@ -515,7 +515,7 @@ PHP_FUNCTION(stomp_connect)
 		STOMP_ERROR(0, stomp->error);
 	}
 
-	stomp_close(stomp TSRMLS_CC);
+	stomp_close(stomp);
 	RETURN_FALSE;
 }
 /* }}} */
@@ -573,7 +573,7 @@ PHP_FUNCTION(stomp_close)
 		stomp_object_t *i_obj = NULL;
 		FETCH_STOMP_OBJECT;
 		stomp_send_disconnect(stomp TSRMLS_CC);
-		stomp_close(stomp TSRMLS_CC);
+		stomp_close(stomp);
 		i_obj->stomp = NULL;
 	} else {
 		zval *arg = NULL;

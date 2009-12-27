@@ -148,7 +148,7 @@ int stomp_connect(stomp_t *stomp TSRMLS_DC)
 
 /* {{{ stomp_close
  */
-void stomp_close(stomp_t *stomp TSRMLS_DC)
+void stomp_close(stomp_t *stomp)
 {
 	if (NULL == stomp) {
 		return;
