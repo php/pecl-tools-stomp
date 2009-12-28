@@ -54,8 +54,8 @@ stomp_t *stomp_init()
 	stomp->options.read_timeout_usec = 2;
 
 #if HAVE_STOMP_SSL
+	stomp->options.use_ssl = 0;
 	stomp->ssl_handle = NULL;
-	stomp->use_ssl = 0;
 #endif
 
 	return stomp;
@@ -121,7 +121,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 
 	if (select(stomp->fd + 1, NULL, &rfds, NULL, &tv) > 0) {
 #if HAVE_STOMP_SSL
-		if (stomp->use_ssl) {
+		if (stomp->options.use_ssl) {
 			SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
 			if (NULL == ctx) {
 				stomp_set_error(stomp, "failed to create the SSL context", 0);
@@ -231,7 +231,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	}
 
 #ifdef HAVE_STOMP_SSL
-	if (stomp->use_ssl) {
+	if (stomp->options.use_ssl) {
 		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
@@ -262,7 +262,7 @@ int stomp_recv(stomp_t *stomp, char *msg, size_t length)
 {
 	int len;
 #if HAVE_STOMP_SSL
-	if(stomp->use_ssl) {
+	if(stomp->options.use_ssl) {
 		len = SSL_read(stomp->ssl_handle, msg, length);
 	} else {
 #endif

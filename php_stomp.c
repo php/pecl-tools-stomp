@@ -456,7 +456,7 @@ PHP_FUNCTION(stomp_connect)
 	stomp = stomp_init();
 
 #if HAVE_STOMP_SSL
-	stomp->use_ssl = use_ssl;
+	stomp->options.use_ssl = use_ssl;
 #endif 
 
 	stomp->options.read_timeout_sec     = STOMP_G(read_timeout_sec);

@@ -40,6 +40,9 @@ typedef struct _stomp_options {
 	long connect_timeout_usec;
 	long read_timeout_sec;
 	long read_timeout_usec;
+#if HAVE_STOMP_SSL
+	int use_ssl;
+#endif    
 } stomp_options_t;
 
 typedef struct _stomp {
@@ -54,7 +57,6 @@ typedef struct _stomp {
 	char *session;
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
-	int use_ssl;
 #endif
 } stomp_t;
 
