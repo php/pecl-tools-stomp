@@ -453,14 +453,21 @@ PHP_FUNCTION(stomp_connect)
 		}
 	}
 
-	stomp = stomp_init(url_parts->host, url_parts->port ? url_parts->port : 61613, STOMP_G(read_timeout_sec), STOMP_G(read_timeout_usec));
-	php_url_free(url_parts);
+	stomp = stomp_init();
 
 #if HAVE_STOMP_SSL
 	stomp->use_ssl = use_ssl;
-#endif    
+#endif 
 
-	if ((stomp->status = stomp_connect(stomp TSRMLS_CC))) {
+	stomp->options.read_timeout_sec     = STOMP_G(read_timeout_sec);
+	stomp->options.read_timeout_usec    = STOMP_G(read_timeout_usec);
+	stomp->options.connect_timeout_sec  = STOMP_G(connection_timeout_sec);
+	stomp->options.connect_timeout_usec = STOMP_G(connection_timeout_usec);
+
+	stomp->status = stomp_connect(stomp, url_parts->host, url_parts->port ? url_parts->port : 61613 TSRMLS_CC);
+	php_url_free(url_parts);
+
+	if (stomp->status) {
 		stomp_frame_t *res;
 		stomp_frame_t frame = {0};
  
@@ -1030,8 +1037,8 @@ PHP_FUNCTION(stomp_set_read_timeout)
 		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
 	}
 
-	stomp->read_timeout_sec = sec;
-	stomp->read_timeout_usec = usec;
+	stomp->options.read_timeout_sec = sec;
+	stomp->options.read_timeout_usec = usec;
 }
 /* }}} */
 
@@ -1053,8 +1060,8 @@ PHP_FUNCTION(stomp_get_read_timeout)
 	}
 
 	array_init(return_value);
-	add_assoc_long_ex(return_value, "sec", sizeof("sec"), stomp->read_timeout_sec);
-	add_assoc_long_ex(return_value, "usec", sizeof("usec"), stomp->read_timeout_usec);
+	add_assoc_long_ex(return_value, "sec", sizeof("sec"), stomp->options.read_timeout_sec);
+	add_assoc_long_ex(return_value, "usec", sizeof("usec"), stomp->options.read_timeout_usec);
 }
 /* }}} */
 

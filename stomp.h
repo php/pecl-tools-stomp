@@ -35,22 +35,29 @@
 	ALLOC_HASHTABLE(f->headers); \
 	zend_hash_init(f->headers, 0, NULL, NULL, 0);
 
+typedef struct _stomp_options {
+	long connect_timeout_sec;
+	long connect_timeout_usec;
+	long read_timeout_sec;
+	long read_timeout_usec;
+} stomp_options_t;
+
 typedef struct _stomp {
 	php_socket_t fd;    
 	php_sockaddr_storage localaddr;
+	stomp_options_t options;
 	char *host;
 	unsigned short port;
 	int status;
 	char *error;
 	int errnum;
-	long read_timeout_sec;
-	long read_timeout_usec;
 	char *session;
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
 	int use_ssl;
 #endif
 } stomp_t;
+
 
 typedef struct _stomp_frame {
 	char *command;
@@ -60,8 +67,8 @@ typedef struct _stomp_frame {
 	int body_length;
 } stomp_frame_t;
 
-stomp_t *stomp_init(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec);
-int stomp_connect(stomp_t *stomp TSRMLS_DC);
+stomp_t *stomp_init();
+int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC);
 void stomp_close(stomp_t *stomp);
 int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
 stomp_frame_t *stomp_read_frame(stomp_t *connection);

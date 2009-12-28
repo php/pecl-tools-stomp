@@ -35,24 +35,23 @@ extern zend_class_entry *stomp_ce_exception;
 
 /* {{{ stomp_init
  */
-stomp_t *stomp_init(const char *host, unsigned short port, long read_timeout_sec, long read_timeout_usec) 
+stomp_t *stomp_init() 
 {
 	/* Memory allocation for the stomp */
 	stomp_t *stomp = (stomp_t *) emalloc(sizeof(stomp_t));
 	memset(stomp, 0, sizeof(*stomp));
 
 	/* Define all values */
-	stomp->host = (char *) emalloc(strlen(host) + 1);
-	memcpy(stomp->host, host, strlen(host));
-	stomp->host[strlen(host)] = '\0';
-
-	stomp->port = port;
+	stomp->host = NULL;
+	stomp->port = 0;
 	stomp->status = 0;
 	stomp->error = NULL;
 	stomp->errnum = 0;
-	stomp->read_timeout_sec = read_timeout_sec;
-	stomp->read_timeout_usec = read_timeout_usec;
 	stomp->session = NULL;
+	stomp->options.connect_timeout_sec = 2;
+	stomp->options.connect_timeout_usec = 0;
+	stomp->options.read_timeout_sec = 2;
+	stomp->options.read_timeout_usec = 2;
 
 #if HAVE_STOMP_SSL
 	stomp->ssl_handle = NULL;
@@ -79,15 +78,25 @@ void stomp_set_error(stomp_t *stomp, const char *error, int errnum)
 
 /* {{{ stomp_connect 
  */
-int stomp_connect(stomp_t *stomp TSRMLS_DC) 
+int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC)
 {
 	char error[1024];
 	socklen_t        size;
 	struct timeval tv;
 	fd_set rfds;
 
-	tv.tv_sec = STOMP_G(connection_timeout_sec);
-	tv.tv_usec = STOMP_G(connection_timeout_usec);
+	if (stomp->host != NULL)
+	{
+		efree(stomp->host);
+	}
+	stomp->host = (char *) emalloc(strlen(host) + 1);
+	memcpy(stomp->host, host, strlen(host));
+	stomp->host[strlen(host)] = '\0';
+
+	stomp->port = port;
+
+	tv.tv_sec = stomp->options.connect_timeout_sec;
+	tv.tv_usec = stomp->options.connect_timeout_usec;
 
 	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0 TSRMLS_CC);
 	if (stomp->fd == -1) {
@@ -516,8 +525,8 @@ int stomp_select(stomp_t *stomp)
 	struct timeval tv;
 	fd_set rfds;
 
-	tv.tv_sec = stomp->read_timeout_sec;
-	tv.tv_usec = stomp->read_timeout_usec;
+	tv.tv_sec = stomp->options.read_timeout_sec;
+	tv.tv_usec = stomp->options.read_timeout_usec;
 
 	FD_ZERO(&rfds);
 	FD_SET(stomp->fd, &rfds);
