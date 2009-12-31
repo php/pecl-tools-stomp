@@ -37,7 +37,7 @@ extern zend_class_entry *stomp_ce_exception;
  */
 stomp_t *stomp_init() 
 {
-	/* Memory allocation for the stomp */
+	/* Memory allocation */
 	stomp_t *stomp = (stomp_t *) emalloc(sizeof(stomp_t));
 	memset(stomp, 0, sizeof(*stomp));
 
@@ -457,7 +457,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 			*p2=0;
 			key = p;
 
-			/* The rest if the value. */
+			/* The rest is the value. */
 			value = p2+1;
 
 			/* Insert key/value into hash table. */
