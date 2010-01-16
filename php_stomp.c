@@ -804,17 +804,34 @@ PHP_FUNCTION(stomp_read_frame)
 	stomp_t *stomp = NULL;
 	stomp_frame_t *res = NULL;
 	int sel_res = 0;
+	char *class_name = NULL;
+	int class_name_len = 0;
+	zend_class_entry *ce = NULL;
 
 	if (stomp_object) {
 		stomp_object_t *i_obj = NULL;
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &class_name, &class_name_len) == FAILURE) {
+			return;
+		}
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg = NULL;
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|s", &arg, &class_name, &class_name_len) == FAILURE) {
 			return;
 		}
 		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp);
 	}
+
+	if (class_name_len > 0) { 
+		ce = zend_fetch_class(class_name, class_name_len, ZEND_FETCH_CLASS_AUTO TSRMLS_CC);
+		if (!ce) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not find class '%s'", class_name);
+			ce = stomp_ce_frame;
+		}
+	} else if (stomp_object) {
+		ce = stomp_ce_frame;
+	}
+
 
 	if ((sel_res = stomp_select(stomp)) > 0 && (res = stomp_read_frame(stomp))) {
 		zval *headers = NULL;
@@ -844,13 +861,66 @@ PHP_FUNCTION(stomp_read_frame)
 			}
 		}
 		
-		if (stomp_object) {
-			object_init_ex(return_value, stomp_ce_frame);
-			zend_update_property_stringl(stomp_ce_frame, return_value, "command", sizeof("command")-1, res->command, res->command_length TSRMLS_CC);
-			if (res->body) {
-				zend_update_property_stringl(stomp_ce_frame, return_value, "body", sizeof("body")-1, res->body, res->body_length TSRMLS_CC);
+		if (ce) {
+			zend_fcall_info fci;
+			zend_fcall_info_cache fcc;
+			zval *retval_ptr;
+
+			object_init_ex(return_value, ce);
+
+			if (ce->constructor) {
+				zval *cmd = NULL, *body = NULL;
+				ALLOC_ZVAL(cmd);
+				Z_SET_REFCOUNT_P(cmd, 1);
+				Z_UNSET_ISREF_P(cmd);
+				ZVAL_STRINGL(cmd, res->command, res->command_length, 1);
+
+				ALLOC_ZVAL(body);
+				Z_SET_REFCOUNT_P(body, 1); 
+				Z_UNSET_ISREF_P(body);
+				if (res->body) {
+					ZVAL_STRINGL(body, res->body, res->body_length, 1);
+				} else {
+					ZVAL_NULL(body);
+				}
+
+				fci.size = sizeof(fci);
+				fci.function_table = &ce->function_table;
+				fci.function_name = NULL;
+				fci.symbol_table = NULL;
+				fci.object_ptr = return_value;
+				fci.retval_ptr_ptr = &retval_ptr;
+
+				// PARAMS
+				fci.param_count = 3;
+				fci.params = (zval***) safe_emalloc(sizeof(zval*), 3, 0);
+				fci.params[0] = &cmd;
+				fci.params[1] = &headers;
+				fci.params[2] = &body;
+
+				fci.no_separation = 1;
+
+				fcc.initialized = 1;
+				fcc.function_handler = ce->constructor;
+				fcc.calling_scope = EG(scope);
+				fcc.called_scope = Z_OBJCE_P(return_value);
+				fcc.object_ptr = return_value;
+
+				if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
+					zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Could not execute %s::%s()", ce->name, ce->constructor->common.function_name);
+				} else {
+					if (retval_ptr) {
+						zval_ptr_dtor(&retval_ptr);
+					}
+				}
+				if (fci.params) {
+					efree(fci.params);
+				}
+			
+				zval_ptr_dtor(&cmd);
+				zval_ptr_dtor(&body);
 			}
-			zend_update_property(stomp_ce_frame, return_value, "headers", sizeof("headers")-1, headers TSRMLS_CC);
+
 			zval_ptr_dtor(&headers);
 		} else {
 			array_init(return_value);

@@ -11,7 +11,7 @@ $s = new Stomp();
 $s->send('/queue/test-09', 'A test Message');
 $s->subscribe('/queue/test-09');
 var_dump($s->readFrame()->body);
-var_dump($s->readFrame('frame'));
+var_dump($s->readFrame());
 
 ?>
 --EXPECTF--

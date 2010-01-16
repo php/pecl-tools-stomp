@@ -12,11 +12,9 @@ stomp_send($link, '/queue/test-09', 'A test Message');
 stomp_subscribe($link, '/queue/test-09');
 $result = stomp_read_frame($link);
 var_dump($result['body']);
-var_dump(stomp_read_frame($link, 'frame'));
+var_dump(stomp_read_frame($link));
 
 ?>
 --EXPECTF--
 string(14) "A test Message"
-
-Warning: stomp_read_frame() expects exactly 1 parameter, 2 given in %s on line %d
-NULL
+bool(false)
