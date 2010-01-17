@@ -12,14 +12,12 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2009-11-22</date>
-    <version><release>0.3.2</release><api>0.3.2</api></version>
+    <date>2010-??-??</date>
+    <version><release>0.4.0</release><api>0.4.0</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Fixed bug #16936 (Module segfaults on readFrame if Frame > STOMP_BUFSIZE)
-- Fixed bug #16933 (readFrame does not notice when server shuts down)
-- Fixed bug #16930 (readFrame reports error-frames as "timeout")    
+- Adds the ability to specify an alternative class for readFrame
     </notes>
 
     <contents>
@@ -78,6 +76,18 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>0.3.2</release><api>0.3.2</api></version>
+            <stability><release>beta</release><api>beta</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2009-11-22</date>
+            <notes>
+- Adds alt class     
+- Fixed bug #16936 (Module segfaults on readFrame if Frame > STOMP_BUFSIZE)
+- Fixed bug #16933 (readFrame does not notice when server shuts down)
+- Fixed bug #16930 (readFrame reports error-frames as "timeout")    
+            </notes>
+        </release>
         <release>
             <version><release>0.3.1</release><api>0.3.1</api></version>
             <stability><release>beta</release><api>beta</api></stability>
