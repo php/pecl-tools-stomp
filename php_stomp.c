@@ -880,13 +880,23 @@ PHP_FUNCTION(stomp_read_frame)
 			if (ce->constructor) {
 				zval *cmd = NULL, *body = NULL;
 				ALLOC_ZVAL(cmd);
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)								
 				Z_SET_REFCOUNT_P(cmd, 1);
 				Z_UNSET_ISREF_P(cmd);
+#else 
+				cmd->refcount = 1;
+				cmd->is_ref = 0;
+#endif
 				ZVAL_STRINGL(cmd, res->command, res->command_length, 1);
 
 				ALLOC_ZVAL(body);
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)				
 				Z_SET_REFCOUNT_P(body, 1); 
 				Z_UNSET_ISREF_P(body);
+#else
+				body->refcount = 1;
+				body->is_ref = 0;
+#endif
 				if (res->body) {
 					ZVAL_STRINGL(body, res->body, res->body_length, 1);
 				} else {
@@ -897,7 +907,11 @@ PHP_FUNCTION(stomp_read_frame)
 				fci.function_table = &ce->function_table;
 				fci.function_name = NULL;
 				fci.symbol_table = NULL;
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)
 				fci.object_ptr = return_value;
+#else 
+				fci.object_pp = &return_value;
+#endif				
 				fci.retval_ptr_ptr = &retval_ptr;
 
 				// PARAMS
@@ -912,9 +926,12 @@ PHP_FUNCTION(stomp_read_frame)
 				fcc.initialized = 1;
 				fcc.function_handler = ce->constructor;
 				fcc.calling_scope = EG(scope);
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)				
 				fcc.called_scope = Z_OBJCE_P(return_value);
 				fcc.object_ptr = return_value;
-
+#else
+				fcc.object_pp = &return_value;
+#endif				
 				if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
 					zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Could not execute %s::%s()", ce->name, ce->constructor->common.function_name);
 				} else {
