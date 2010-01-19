@@ -12,12 +12,12 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2010-01-17</date>
-    <version><release>0.4.0</release><api>0.4.0</api></version>
+    <date>2010-01-19</date>
+    <version><release>0.4.1</release><api>0.4.1</api></version>
     <stability><release>beta</release><api>beta</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Adds the ability to specify an alternative class for readFrame
+- Fix compilation issue on PHP5.2 branch
     </notes>
 
     <contents>
@@ -78,6 +78,15 @@ This extension allows php applications to communicate with any Stomp compliant M
 
     <changelog>
         <release>
+            <version><release>0.4.0</release><api>0.4.0</api></version>
+            <stability><release>beta</release><api>beta</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2010-01-17</date>
+            <notes>
+- Adds the ability to specify an alternative class for readFrame
+            </notes>
+        </release>
+        <release>
             <version><release>0.3.2</release><api>0.3.2</api></version>
             <stability><release>beta</release><api>beta</api></stability>
             <license uri="http://www.php.net/license">PHP License</license>
@@ -132,5 +141,4 @@ This extension allows php applications to communicate with any Stomp compliant M
             </notes>
         </release>
     </changelog>
-
 </package>
