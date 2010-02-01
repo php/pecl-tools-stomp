@@ -70,9 +70,10 @@ class Stomp {
     /**
      * Read the next frame
      *
-     * @return StompFrame on success, or FALSE on failure
+     * @param string $className name of the class to instantiate.
+     * @return object on success, or FALSE on failure
      */
-    public function readFrame() {
+    public function readFrame($className = 'stompFrame') {
     }
 
     /**
