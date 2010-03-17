@@ -101,6 +101,7 @@ ZEND_BEGIN_ARG_INFO_EX(stomp_connect_args, 0, 0, 0)
 ZEND_ARG_INFO(0, broker)
 ZEND_ARG_INFO(0, username)
 ZEND_ARG_INFO(0, password)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_link_only, 0, 0, 1)
@@ -411,11 +412,12 @@ PHP_FUNCTION(stomp_version)
 }
 /* }}} */
 
-/* {{{ proto Stomp::__construct([string broker [, string username [, string password]]])
+/* {{{ proto Stomp::__construct([string broker [, string username [, string password [, array headers]]]])
    Connect to server */
 PHP_FUNCTION(stomp_connect)
 {
 	zval *stomp_object = getThis();
+	zval *headers = NULL;
 	stomp_t *stomp = NULL;
 	char *broker = NULL, *username = NULL, *password = NULL;
 	int broker_len = 0, username_len = 0, password_len = 0;
@@ -429,7 +431,7 @@ PHP_FUNCTION(stomp_connect)
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sss", &broker, &broker_len, &username, &username_len, &password, &password_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sssa!", &broker, &broker_len, &username, &username_len, &password, &password_len, &headers) == FAILURE) {
 		return;
 	}
 
@@ -490,6 +492,10 @@ PHP_FUNCTION(stomp_connect)
 		zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
 		zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
  
+		if (NULL != headers) {
+			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
+		}
+
 		stomp_send(stomp, &frame TSRMLS_CC);
 		CLEAR_FRAME(frame);
  
