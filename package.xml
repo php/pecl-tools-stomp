@@ -12,12 +12,13 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2010-02-11</date>
-    <version><release>1.0.0</release><api>1.0.0</api></version>
+    <date>xxxx-xx-xx</date>
+    <version><release>1.x.x</release><api>1.x.x</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Bump to stable
+- Add new parameter to the constructor to allow client to send extra informations
+- Add zend engine runtime cache support (introduced into trunk) 
     </notes>
 
     <contents>
@@ -76,6 +77,15 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+		<release>
+    		<version><release>1.0.0</release><api>1.0.0</api></version>
+			<stability><release>stable</release><api>stable</api></stability>
+			<license uri="http://www.php.net/license">PHP License</license>
+			<date>2010-02-11</date>
+			<notes>
+- Bump to stable
+			</notes>
+		</release>
         <release>    
             <version><release>0.4.1</release><api>0.4.1</api></version>
             <stability><release>beta</release><api>beta</api></stability>
