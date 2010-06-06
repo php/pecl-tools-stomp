@@ -316,9 +316,13 @@ static zend_object_value php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 
 	intern = (stomp_object_t *) ecalloc(1, sizeof(stomp_object_t));
 	intern->stomp = NULL;
-
+	
 	zend_object_std_init(&intern->std, ce TSRMLS_CC);
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION == 3 && PHP_RELEASE_VERSION >= 99) || (PHP_MAJOR_VERSION > 5)
+	object_properties_init(&intern->std, ce);
+#else
 	zend_hash_copy(intern->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+#endif
 
 	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t) stomp_object_free_storage, NULL TSRMLS_CC);
 	retval.handlers = zend_get_std_object_handlers();
