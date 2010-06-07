@@ -202,7 +202,6 @@ void stomp_close(stomp_t *stomp)
  */
 int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 {
-	int n;
 	smart_str buf = {0};
 
 	/* Command */
