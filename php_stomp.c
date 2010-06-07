@@ -425,15 +425,11 @@ PHP_FUNCTION(stomp_connect)
 	stomp_t *stomp = NULL;
 	char *broker = NULL, *username = NULL, *password = NULL;
 	int broker_len = 0, username_len = 0, password_len = 0;
-	struct timeval tv;
 	php_url *url_parts;
 
 #ifdef HAVE_STOMP_SSL    
 	int use_ssl = 0;
 #endif    
-
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sssa!", &broker, &broker_len, &username, &username_len, &password, &password_len, &headers) == FAILURE) {
 		return;
