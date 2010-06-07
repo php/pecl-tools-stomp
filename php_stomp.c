@@ -308,17 +308,22 @@ static void stomp_object_free_storage(stomp_object_t *intern TSRMLS_DC)
 }
 
 	 
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION == 3 && PHP_RELEASE_VERSION >= 99) || (PHP_MAJOR_VERSION > 5)
+#define PHP_STOMP_RUNTIME_CACHE 
+#endif 
 static zend_object_value php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 {
 	zend_object_value retval;
 	stomp_object_t *intern;
+#ifndef PHP_STOMP_RUNTIME_CACHE	
 	zval *tmp;
+#endif	
 
 	intern = (stomp_object_t *) ecalloc(1, sizeof(stomp_object_t));
 	intern->stomp = NULL;
 	
 	zend_object_std_init(&intern->std, ce TSRMLS_CC);
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION == 3 && PHP_RELEASE_VERSION >= 99) || (PHP_MAJOR_VERSION > 5)
+#ifdef PHP_STOMP_RUNTIME_CACHE
 	object_properties_init(&intern->std, ce);
 #else
 	zend_hash_copy(intern->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
@@ -818,7 +823,6 @@ PHP_FUNCTION(stomp_read_frame)
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	stomp_frame_t *res = NULL;
-	int sel_res = 0;
 	char *class_name = NULL;
 	int class_name_len = 0;
 	zend_class_entry *ce = NULL;
@@ -848,7 +852,7 @@ PHP_FUNCTION(stomp_read_frame)
 	}
 
 
-	if ((sel_res = stomp_select(stomp)) > 0 && (res = stomp_read_frame(stomp))) {
+	if ((res = stomp_read_frame(stomp))) {
 		zval *headers = NULL;
 
 		if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
@@ -965,9 +969,6 @@ PHP_FUNCTION(stomp_read_frame)
 
 		stomp_free_frame(res);
 	} else {
-		if (sel_res == -1) {
-			STOMP_ERROR(0, "Error while selecting from socket: %d", errno);
-		}
 		RETURN_FALSE;
 	}
 }

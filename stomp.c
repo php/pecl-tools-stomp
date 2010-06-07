@@ -76,6 +76,26 @@ void stomp_set_error(stomp_t *stomp, const char *error, int errnum)
 }
 /* }}} */
 
+/* {{{ stomp_writeable 
+ */
+int stomp_writeable(stomp_t *stomp) 
+{
+	int     n;
+
+	n = php_pollfd_for_ms(stomp->fd, POLLOUT, 1000);
+	if (n < 1) {
+#ifndef PHP_WIN32
+		if (n == 0) {
+			errno = ETIMEDOUT;
+		}
+#endif
+		return 0;
+	}
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ stomp_connect 
  */
 int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC)
@@ -83,7 +103,6 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	char error[1024];
 	socklen_t        size;
 	struct timeval tv;
-	fd_set rfds;
 
 	if (stomp->host != NULL)
 	{
@@ -113,13 +132,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		return 0; 
 	}
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
-	FD_ZERO(&rfds);
-	FD_SET(stomp->fd, &rfds);
-
-	if (select(stomp->fd + 1, NULL, &rfds, NULL, &tv) > 0) {
+	if (stomp_writeable(stomp)) {
 #if HAVE_STOMP_SSL
 		if (stomp->options.use_ssl) {
 			SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
@@ -189,6 +202,7 @@ void stomp_close(stomp_t *stomp)
  */
 int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 {
+	int n;
 	smart_str buf = {0};
 
 	/* Command */
@@ -230,6 +244,13 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		smart_str_appends(&buf, frame->body);
 	}
 
+	if (!stomp_writeable(stomp)) {
+		char error[1024];
+		snprintf(error, sizeof(error), "Unable to send data");
+		stomp_set_error(stomp, error, errno);
+		return 0;
+	}
+
 #ifdef HAVE_STOMP_SSL
 	if (stomp->options.use_ssl) {
 		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
@@ -260,7 +281,18 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
  */
 int stomp_recv(stomp_t *stomp, char *msg, size_t length)
 {
-	int len;
+	int n, len;
+
+	n = php_pollfd_for_ms(stomp->fd, PHP_POLLREADABLE, stomp->options.read_timeout_sec * 1000 + stomp->options.read_timeout_usec);
+	if (n < 1) {
+#if !defined(PHP_WIN32) && !(defined(NETWARE) && defined(USE_WINSOCK))
+		if (n == 0) {
+			errno = ETIMEDOUT;
+		}
+#endif
+		return -1;  
+	}
+
 #if HAVE_STOMP_SSL
 	if(stomp->options.use_ssl) {
 		len = SSL_read(stomp->ssl_handle, msg, length);
@@ -522,15 +554,18 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
  */
 int stomp_select(stomp_t *stomp)
 {
-	struct timeval tv;
-	fd_set rfds;
+	int     n;
 
-	tv.tv_sec = stomp->options.read_timeout_sec;
-	tv.tv_usec = stomp->options.read_timeout_usec;
+	n = php_pollfd_for_ms(stomp->fd, PHP_POLLREADABLE, stomp->options.read_timeout_sec * 1000 + stomp->options.read_timeout_usec);
+	if (n < 1) {
+#if !defined(PHP_WIN32) && !(defined(NETWARE) && defined(USE_WINSOCK))
+		if (n == 0) { 
+			errno = ETIMEDOUT;
+		}   
+#endif          
+		return 0;
+	}
 
-	FD_ZERO(&rfds);
-	FD_SET(stomp->fd, &rfds);
-
-	return select(stomp->fd + 1, &rfds, NULL, NULL, &tv);
+	return 1;
 }
 /* }}} */
