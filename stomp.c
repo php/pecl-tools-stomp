@@ -524,6 +524,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
  */
 int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 	int success = 1;
+	char error[1024];
 	char *receipt = NULL;
 	if (zend_hash_find(frame->headers, "receipt", sizeof("receipt"), (void **)&receipt) == SUCCESS) {
 		stomp_frame_t *res = stomp_read_frame(stomp);
@@ -535,12 +536,18 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 						&& strlen(receipt) == strlen(receipt_id)
 						&& !strcmp(receipt, receipt_id)) {
 					success = 1;
+				} else {
+					snprintf(error, sizeof(error), "Unexpected receipt id : %s", receipt_id);
+					stomp_set_error(stomp, error, 0);
 				}
 			} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 				char *error_msg = NULL;
 				if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
 					stomp_set_error(stomp, error_msg, 0); 
 				}
+			} else {
+				snprintf(error, sizeof(error), "Receipt not received, unexpected command : %s", res->command);
+				stomp_set_error(stomp, error, 0);
 			}
 			stomp_free_frame(res);
 		}
