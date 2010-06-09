@@ -1,0 +1,9 @@
+- Add a new StompException->details property to get error details
+
+- Add the ability to connect to a network of brokers
+    (Cf: http://activemq.apache.org/networks-of-brokers.html)
+
+- Review tests to work on every message broker
+    - ActimeMQ
+    - stompserver (Ruby)
+    - TBD
