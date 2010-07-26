@@ -256,6 +256,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
 			stomp_set_error(stomp, error, errno);
+			smart_str_free(&buf);
 			return 0;
 		}
 	} else {
@@ -264,6 +265,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
 			stomp_set_error(stomp, error, errno);
+			smart_str_free(&buf);
 			return 0;
 		}
 #ifdef HAVE_STOMP_SSL
