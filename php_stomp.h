@@ -88,6 +88,8 @@ PHP_FUNCTION(stomp_get_read_timeout);
 
 PHP_METHOD(stompframe, __construct);
 
+PHP_METHOD(stompexception, getDetails);
+
 ZEND_BEGIN_MODULE_GLOBALS(stomp)
 	/* INI */
 	char *default_broker;

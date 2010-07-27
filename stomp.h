@@ -54,6 +54,7 @@ typedef struct _stomp {
 	int status;
 	char *error;
 	int errnum;
+	char *error_details;
 	char *session;
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
@@ -76,7 +77,7 @@ int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
 stomp_frame_t *stomp_read_frame(stomp_t *connection);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);
 int stomp_select(stomp_t *connection);
-void stomp_set_error(stomp_t *stomp, const char *error, int errnum);
+void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *details);
 void stomp_free_frame(stomp_frame_t *frame);
 #endif /* _STOMP_H_ */
 

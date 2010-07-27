@@ -46,6 +46,7 @@ stomp_t *stomp_init()
 	stomp->port = 0;
 	stomp->status = 0;
 	stomp->error = NULL;
+	stomp->error_details = NULL;
 	stomp->errnum = 0;
 	stomp->session = NULL;
 	stomp->options.connect_timeout_sec = 2;
@@ -64,14 +65,22 @@ stomp_t *stomp_init()
 
 /* {{{ stomp_set_error 
  */
-void stomp_set_error(stomp_t *stomp, const char *error, int errnum) 
+void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *details) 
 {
+	if (stomp->error != NULL) {
+		efree(stomp->error);
+		stomp->error = NULL;
+	}   
+	if (stomp->error_details != NULL) {
+		efree(stomp->error_details);
+		stomp->error_details = NULL;
+	}
+	stomp->errnum = errnum;
 	if (error != NULL) {
-		if (stomp->error != NULL) {
-			efree(stomp->error);
-		}   
 		stomp->error = estrdup(error);
-		stomp->errnum = errnum;
+	}
+	if (details != NULL) {
+		stomp->error_details = estrdup(details);
 	}
 }
 /* }}} */
@@ -120,7 +129,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0 TSRMLS_CC);
 	if (stomp->fd == -1) {
 		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
-		stomp_set_error(stomp, error, errno);
+		stomp_set_error(stomp, error, errno, NULL);
 		return 0;
 	}
 
@@ -128,7 +137,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	memset(&stomp->localaddr, 0, size);
 	if (getsockname(stomp->fd, (struct sockaddr*) &stomp->localaddr, &size) == -1) {
 		snprintf(error, sizeof(error), "getsockname failed: %s (%d)", strerror(errno), errno);
-		stomp_set_error(stomp, error, errno); 
+		stomp_set_error(stomp, error, errno, NULL); 
 		return 0; 
 	}
 
@@ -137,7 +146,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		if (stomp->options.use_ssl) {
 			SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
 			if (NULL == ctx) {
-				stomp_set_error(stomp, "failed to create the SSL context", 0);
+				stomp_set_error(stomp, "failed to create the SSL context", 0, NULL);
 				return 0;
 			}
 
@@ -145,7 +154,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 
 			stomp->ssl_handle = SSL_new(ctx);
 			if (stomp->ssl_handle == NULL) {
-				stomp_set_error(stomp, "failed to create the SSL handle", 0);
+				stomp_set_error(stomp, "failed to create the SSL handle", 0, NULL);
 				SSL_CTX_free(ctx);
 				return 0;
 			}
@@ -153,7 +162,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 			SSL_set_fd(stomp->ssl_handle, stomp->fd);
 
 			if (SSL_connect(stomp->ssl_handle) <= 0) {
-				stomp_set_error(stomp, "SSL/TLS handshake failed", 0);
+				stomp_set_error(stomp, "SSL/TLS handshake failed", 0, NULL);
 				SSL_shutdown(stomp->ssl_handle);
 				return 0;
 			}
@@ -162,7 +171,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		return 1;
 	} else {
 		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
-		stomp_set_error(stomp, error, errno); 
+		stomp_set_error(stomp, error, errno, NULL); 
 		return 0;
 	}
 }
@@ -192,6 +201,9 @@ void stomp_close(stomp_t *stomp)
 	}
 	if (stomp->error) {
 		efree(stomp->error);
+	}
+	if (stomp->error_details) {
+		efree(stomp->error_details);
 	}
 
 	efree(stomp);
@@ -246,7 +258,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	if (!stomp_writeable(stomp)) {
 		char error[1024];
 		snprintf(error, sizeof(error), "Unable to send data");
-		stomp_set_error(stomp, error, errno);
+		stomp_set_error(stomp, error, errno, NULL);
 		return 0;
 	}
 
@@ -255,7 +267,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
-			stomp_set_error(stomp, error, errno);
+			stomp_set_error(stomp, error, errno, NULL);
 			smart_str_free(&buf);
 			return 0;
 		}
@@ -264,7 +276,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		if (-1 == send(stomp->fd, buf.c, buf.len, 0) || -1 == send(stomp->fd, "\0\n", 2, 0)) {
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
-			stomp_set_error(stomp, error, errno);
+			stomp_set_error(stomp, error, errno, NULL);
 			smart_str_free(&buf);
 			return 0;
 		}
@@ -540,16 +552,16 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 					success = 1;
 				} else {
 					snprintf(error, sizeof(error), "Unexpected receipt id : %s", receipt_id);
-					stomp_set_error(stomp, error, 0);
+					stomp_set_error(stomp, error, 0, NULL);
 				}
 			} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 				char *error_msg = NULL;
 				if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-					stomp_set_error(stomp, error_msg, 0); 
+					stomp_set_error(stomp, error_msg, 0, res->body);
 				}
 			} else {
 				snprintf(error, sizeof(error), "Receipt not received, unexpected command : %s", res->command);
-				stomp_set_error(stomp, error, 0);
+				stomp_set_error(stomp, error, 0, NULL);
 			}
 			stomp_free_frame(res);
 		}

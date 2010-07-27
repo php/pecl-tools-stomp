@@ -72,15 +72,28 @@
 	zend_hash_destroy(frame.headers); \
 	efree(frame.headers);
 
-#define STOMP_ERROR(errno, msg, ... ) \
+#define STOMP_ERROR(errno, msg) \
 	STOMP_G(error_no) = errno; \
 	if (STOMP_G(error_msg)) { \
 		efree(STOMP_G(error_msg)); \
 	} \
 	STOMP_G(error_msg) = estrdup(msg); \
 	if (stomp_object) { \
-		zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, msg, ##__VA_ARGS__); \
+		zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, msg); \
 	} 
+
+#define STOMP_ERROR_DETAILS(errno, msg, details) \
+	STOMP_G(error_no) = errno; \
+	if (STOMP_G(error_msg)) { \
+		efree(STOMP_G(error_msg)); \
+	} \
+    STOMP_G(error_msg) = estrdup(msg); \
+    if (stomp_object) { \
+        zval *object = zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, msg); \
+        if (details) { \
+            zend_update_property_string(stomp_ce_exception, object, "details", sizeof("details")-1, (char *) details TSRMLS_CC); \
+        } \
+    }
 
 static int le_stomp;
 
@@ -232,6 +245,13 @@ static zend_function_entry stomp_frame_methods[] = {
 };
 /* }}} */ 
 
+/* {{{ stomp_exception_methods[] */
+static zend_function_entry stomp_exception_methods[] = {
+	PHP_ME(stompexception, getDetails, stomp_no_args, ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+/* }}} */
+
 /* {{{ stomp_module_entry */
 zend_module_entry stomp_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
@@ -359,8 +379,11 @@ PHP_MINIT_FUNCTION(stomp)
 	zend_declare_property_null(stomp_ce_frame, "body", sizeof("body")-1, ZEND_ACC_PUBLIC TSRMLS_CC); 
 
 	/* Register StompException class */
-	INIT_CLASS_ENTRY(ce, PHP_STOMP_EXCEPTION_CLASSNAME, NULL);
+	INIT_CLASS_ENTRY(ce, PHP_STOMP_EXCEPTION_CLASSNAME, stomp_exception_methods);
 	stomp_ce_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+
+	/* Properties */
+	zend_declare_property_null(stomp_ce_exception, "details", sizeof("details")-1, ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	/** Register INI entries **/
 	REGISTER_INI_ENTRIES();
@@ -510,7 +533,7 @@ PHP_FUNCTION(stomp_connect)
 			STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
 		} else if (0 != strncmp("CONNECTED", res->command, sizeof("CONNECTED")-1)) {
 			if (stomp->error) {
-				STOMP_ERROR(stomp->errnum, stomp->error);
+				STOMP_ERROR_DETAILS(stomp->errnum, stomp->error, stomp->error_details);
 			} else {
 				STOMP_ERROR(0, PHP_STOMP_ERR_UNKNOWN);
 			}
@@ -539,7 +562,7 @@ PHP_FUNCTION(stomp_connect)
 			}
 		} 
 	} else {
-		STOMP_ERROR(0, stomp->error);
+		STOMP_ERROR_DETAILS(0, stomp->error, stomp->error_details);
 	}
 
 	stomp_close(stomp);
@@ -858,7 +881,11 @@ PHP_FUNCTION(stomp_read_frame)
 		if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 			char *error_msg = NULL;
 			if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-				STOMP_ERROR(0, error_msg)
+				zval *excobj = zend_throw_exception_ex(stomp_ce_exception, 0 TSRMLS_CC, error_msg);
+				if (res->body) {
+					zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, (char *) res->body TSRMLS_CC);
+				}
+
 				stomp_free_frame(res);
 				RETURN_FALSE;
 			}
@@ -1112,7 +1139,15 @@ PHP_FUNCTION(stomp_error)
 	}
 
 	if (stomp->error) {
-		RETURN_STRING(stomp->error, 1);
+		if (stomp->error_details) {
+			char *error_msg = (char *) emalloc(strlen(stomp->error) + strlen(stomp->error_details) + 10);
+			strcpy(error_msg, stomp->error);
+			strcat(error_msg, "\n\n");
+			strcat(error_msg, stomp->error_details);
+			RETURN_STRING(error_msg, 0);
+		} else {
+			RETURN_STRING(stomp->error, 1);
+		}
 	} else {
 		RETURN_FALSE;
 	}
@@ -1191,4 +1226,18 @@ PHP_METHOD(stompframe, __construct)
 		zend_update_property_stringl(stomp_ce_frame, object, "body", sizeof("body")-1, body, body_length TSRMLS_CC);
 	}
 }
-/* }}} */ 
+/* }}} */
+
+/* {{{ proto string StompException::getDetails()
+   Get error details */
+PHP_METHOD(stompexception, getDetails)
+{
+	zval *object = getThis();	
+	zval *details = NULL;
+
+	details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1 TSRMLS_CC);
+
+	RETURN_STRINGL(Z_STRVAL_P(details), Z_STRLEN_P(details), 1);
+}
+/* }}} */
+
