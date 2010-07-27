@@ -19,8 +19,11 @@ This extension allows php applications to communicate with any Stomp compliant M
     <notes>
 - Add new parameter to the constructor to allow client to send extra informations
 - Add zend engine runtime cache support (introduced into trunk) 
+- Add new details property in the StompException class
+- Add new StompException::getDetails() method
+- Add the frame body content in the Stomp::Error() method 
 - Fixed bug #17262 (Server is not responding on win32).    
-	</notes>
+    </notes>
 
     <contents>
         <dir name="/">
