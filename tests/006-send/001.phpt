@@ -14,7 +14,8 @@ stomp_send($link, '/queue/test-06', array());
 var_dump(stomp_send($link, '/queue/test-06', ''));
 var_dump(stomp_send($link, '/queue/test-06', 'A realMessage'));
 var_dump(stomp_send($link, '/queue/test-06', 'بياريك شارون'));
-var_dump(stomp_send($link, 'بياريك شارون', 'بياريك شارون', array('receipt' => 'message-123')), stomp_error($link));
+var_dump(stomp_send($link, 'بياريك شارون', 'بياريك شارون', array('receipt' => 'message-123')));
+echo gettype(stomp_error($link));
 
 ?>
 --EXPECTF--
@@ -25,4 +26,4 @@ bool(true)
 bool(true)
 bool(true)
 bool(false)
-string(%d) "%s"
+string
