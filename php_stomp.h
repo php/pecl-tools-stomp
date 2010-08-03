@@ -31,7 +31,7 @@ typedef struct _stomp_object {
 #define PHP_STOMP_EXTNAME                       "Stomp"
 #define PHP_STOMP_MAJOR_VERSION                 "1"
 #define PHP_STOMP_MINOR_VERSION                 "0"
-#define PHP_STOMP_PATCH_VERSION                 "0"
+#define PHP_STOMP_PATCH_VERSION                 "1"
 #define PHP_STOMP_VERSION_STATUS                ""
 #define PHP_STOMP_VERSION                       PHP_STOMP_MAJOR_VERSION "." PHP_STOMP_MINOR_VERSION "." PHP_STOMP_PATCH_VERSION PHP_STOMP_VERSION_STATUS
 
