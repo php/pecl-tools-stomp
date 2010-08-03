@@ -17,12 +17,6 @@ This extension allows php applications to communicate with any Stomp compliant M
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Add new parameter to the constructor to allow client to send extra informations
-- Add zend engine runtime cache support (introduced into trunk) 
-- Add new details property in the StompException class
-- Add new StompException::getDetails() method
-- Add the frame body content in the Stomp::Error() method 
-- Fixed bug #17262 (Server is not responding on win32).    
     </notes>
 
     <contents>
@@ -81,6 +75,20 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+		<release>
+			<version><release>1.0.1</release><api>1.0.1</api></version>
+			<stability><release>stable</release><api>stable</api></stability>
+			<license uri="http://www.php.net/license">PHP License</license>
+			<date>2010-08-03</date>
+			<notes>
+- Add new parameter to the constructor to allow client to send extra informations
+- Add zend engine runtime cache support (introduced into trunk)
+- Add new details property in the StompException class
+- Add new StompException::getDetails() method
+- Add the frame body content in the Stomp::Error() method
+- Fixed bug #17262 (Server is not responding on win32)
+			</notes>
+		</release>
 		<release>
     		<version><release>1.0.0</release><api>1.0.0</api></version>
 			<stability><release>stable</release><api>stable</api></stability>
