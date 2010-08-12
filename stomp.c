@@ -450,8 +450,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	char *cmd = NULL, *length_str = NULL;
 	int length = 0;
 
-	if (!stomp_select(stomp))
-	{
+	if (!stomp_select(stomp)) {
 		return NULL;
 	}
 
