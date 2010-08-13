@@ -294,17 +294,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
  */
 int stomp_recv(stomp_t *stomp, char *msg, size_t length)
 {
-	int n, len;
-
-	n = php_pollfd_for_ms(stomp->fd, PHP_POLLREADABLE, stomp->options.read_timeout_sec * 1000 + stomp->options.read_timeout_usec);
-	if (n < 1) {
-#if !defined(PHP_WIN32) && !(defined(NETWARE) && defined(USE_WINSOCK))
-		if (n == 0) {
-			errno = ETIMEDOUT;
-		}
-#endif
-		return -1;  
-	}
+	int len;
 
 #if HAVE_STOMP_SSL
 	if(stomp->options.use_ssl) {
@@ -459,6 +449,10 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	stomp_frame_t *f = NULL;
 	char *cmd = NULL, *length_str = NULL;
 	int length = 0;
+
+	if (!stomp_select(stomp)) {
+		return NULL;
+	}
 
 	INIT_STOMP_FRAME(f);
 
