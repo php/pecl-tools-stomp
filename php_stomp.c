@@ -51,7 +51,6 @@
 	zval **value = NULL; \
 	char *string_key = NULL; \
 	ulong num_key; \
-	zend_hash_internal_pointer_reset(headers_ht); \
 	for (zend_hash_internal_pointer_reset(headers_ht); \
 			zend_hash_get_current_data(headers_ht, (void **)&value) == SUCCESS; \
 			zend_hash_move_forward(headers_ht)) { \
