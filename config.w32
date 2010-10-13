@@ -1,0 +1,13 @@
+// $Id: config.w32 292170 2009-12-15 14:19:32Z pierrick $
+// vim:ft=javascript
+
+ARG_ENABLE("stomp", "enable stomp support", "no");
+
+if (PHP_STOMP != "no") {
+	if (CHECK_LIB("ssleay32.lib", "stomp", PHP_STOMP) && CHECK_LIB("libeay32.lib", "stomp", PHP_STOMP)) {
+		ADD_FLAG("CFLAGS_STOMP", "/DHAVE_STOMP_SSL=1");
+	}
+
+	EXTENSION("stomp", "stomp.c php_stomp.c");
+}
+
