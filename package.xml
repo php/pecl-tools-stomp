@@ -76,6 +76,15 @@ This extension allows php applications to communicate with any Stomp compliant M
 
     <changelog>
 		<release>
+			<version><release>1.0.3</release><api>1.0.3</api></version>
+			<stability><release>stable</release><api>stable</api></stability>
+			<license uri="http://www.php.net/license">PHP License</license>
+			<date>2010-10-12</date>
+			<notes>
+- Fixed bug #18772 (setTimeout usecs not honored)
+			</notes>
+		</release>
+		<release>
 			<version><release>1.0.2</release><api>1.0.2</api></version>
 			<stability><release>stable</release><api>stable</api></stability>
 			<license uri="http://www.php.net/license">PHP License</license>
