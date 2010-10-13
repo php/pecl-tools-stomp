@@ -52,7 +52,7 @@ stomp_t *stomp_init()
 	stomp->options.connect_timeout_sec = 2;
 	stomp->options.connect_timeout_usec = 0;
 	stomp->options.read_timeout_sec = 2;
-	stomp->options.read_timeout_usec = 2;
+	stomp->options.read_timeout_usec = 0;
 
 #if HAVE_STOMP_SSL
 	stomp->options.use_ssl = 0;
