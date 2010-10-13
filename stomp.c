@@ -569,8 +569,12 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 int stomp_select(stomp_t *stomp)
 {
 	int     n;
+	struct timeval tv;
 
-	n = php_pollfd_for_ms(stomp->fd, PHP_POLLREADABLE, stomp->options.read_timeout_sec * 1000 + stomp->options.read_timeout_usec);
+	tv.tv_sec = stomp->options.read_timeout_sec;
+	tv.tv_usec = stomp->options.read_timeout_usec;
+
+	n = php_pollfd_for(stomp->fd, PHP_POLLREADABLE, &tv);
 	if (n < 1) {
 #if !defined(PHP_WIN32) && !(defined(NETWARE) && defined(USE_WINSOCK))
 		if (n == 0) { 
