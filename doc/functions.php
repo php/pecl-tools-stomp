@@ -14,9 +14,10 @@ function stomp_version() {
  * @param string $broker broker URI
  * @param string $username The username
  * @param string $password The password
+ * @param array $headers additional headers (example: receipt).
  * @return Ressource stomp connection identifier on success, or FALSE on failure 
  */
-function stomp_connect($broker = null, $username = null, $password = null) {
+function stomp_connect($broker = null, $username = null, $password = null, array $headers = array()) {
 }
 
 /**
@@ -43,10 +44,10 @@ function stomp_close($link) {
  * @param ressource $link identifier returned by stomp_connect
  * @param string $destination indicates where to send the message 
  * @param string|StompFrame $msg message to be sent
- * @param array $properties extra properties (example: receipt, transaction)
+ * @param array $headers additional headers (example: receipt).
  * @return boolean TRUE on success, or FALSE on failure 
  */
-function stomp_send($link, $destination, $msg, array $properties = array()) {
+function stomp_send($link, $destination, $msg, array $headers = array()) {
 }
 
 /**
@@ -54,10 +55,10 @@ function stomp_send($link, $destination, $msg, array $properties = array()) {
  * 
  * @param ressource $link identifier returned by stomp_connect
  * @param string $destination indicates which destination to subscribe to 
- * @param array $properties extra properties (example: receipt, transaction, id)
+ * @param array $headers additional headers (example: receipt).
  * @return boolean TRUE on success, or FALSE on failure 
  */
-function stomp_subscribe($link, $destination, array $properties = array()) {
+function stomp_subscribe($link, $destination, array $headers = array()) {
 }
 
 /**
@@ -65,10 +66,10 @@ function stomp_subscribe($link, $destination, array $properties = array()) {
  *
  * @param ressource $link identifier returned by stomp_connect
  * @param string $destination indicates which subscription to remove
- * @param array $properties extra properties (example: receipt, transaction, id)
+ * @param array $headers additional headers (example: receipt).
  * @return boolean TRUE on success, or FALSE on failure 
  */
-function stomp_unsubscribe($link, $destination, array $properties = array()) {
+function stomp_unsubscribe($link, $destination, array $headers = array()) {
 }
 
 /**
@@ -124,10 +125,10 @@ function stomp_abort($link, $transaction_id) {
  * 
  * @param ressource $link identifier returned by stomp_connect
  * @param string|StompFrame $msg message/messageId to be acknowledged
- * @param array $properties extra properties (example: receipt, transaction)
+ * @param array $headers additional headers (example: receipt).
  * @return boolean TRUE on success, or FALSE on failure 
  */
-function stomp_ack($link, $msg, array $properties = array()) {
+function stomp_ack($link, $msg, array $headers = array()) {
 }
 
 /**

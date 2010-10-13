@@ -5,11 +5,12 @@ class Stomp {
     /**
      * Connect to server
      * 
-     * @param string $broker Broker URI
+     * @param string $broker The broker URI
      * @param string $username The username
      * @param string $password The password
+     * @param array $headers additional headers (example: receipt).
      */
-    public function __construct($broker = null, $username = null, $password = null) {
+    public function __construct($broker = null, $username = null, $password = null, array $headers = array()) {
     }
 
     /**
@@ -33,30 +34,30 @@ class Stomp {
      * 
      * @param string $destination indicates where to send the message 
      * @param string|StompFrame $msg message to be sent
-     * @param array $properties extra properties (example: receipt, transaction)
+     * @param array $headers additional headers (example: receipt).
      * @return boolean TRUE on success, or FALSE on failure 
      */
-    public function send($destination, $msg, array $properties = array()) {
+    public function send($destination, $msg, array $headers = array()) {
     }
 
     /**
      * Register to listen to a given destination
      * 
      * @param string $destination indicates which destination to subscribe to 
-     * @param array $properties extra properties (example: receipt, transaction, id)
+     * @param array $headers additional headers (example: receipt).
      * @return boolean TRUE on success, or FALSE on failure 
      */
-    public function subscribe($destination, array $properties = array()) {
+    public function subscribe($destination, array $headers = array()) {
     }
 
     /**
      * Remove an existing subscription
      *
      * @param string $destination indicates which subscription to remove
-     * @param array $properties extra properties (example: receipt, transaction, id)
+     * @param array $headers additional headers (example: receipt).
      * @return boolean TRUE on success, or FALSE on failure 
      */
-    public function unsubscribe($destination, array $properties = array()) {
+    public function unsubscribe($destination, array $headers = array()) {
     }
 
     /**
@@ -107,10 +108,10 @@ class Stomp {
      * Acknowledge consumption of a message from a subscription using client acknowledgment
      * 
      * @param string|StompFrame $msg message/messageId to be acknowledged
-     * @param array $properties extra properties (example: receipt, transaction)
+     * @param array $headers additional headers (example: receipt).
      * @return boolean TRUE on success, or FALSE on failure 
      */
-    public function ack($msg, array $properties = array()) {
+    public function ack($msg, array $headers = array()) {
     }
 
     /**
@@ -163,4 +164,12 @@ class StompFrame {
 }
 
 class StompException extends Exception {
+    
+    /**
+     * Get the stomp server error details
+     *
+     * @return string 
+     */
+    public function getDetails() {
+    }
 }
