@@ -429,6 +429,8 @@ PHP_MINFO_FUNCTION(stomp)
 	php_info_print_table_row(2, "API version", PHP_STOMP_VERSION);
 #if HAVE_STOMP_SSL
 	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
 #endif
 	php_info_print_table_end();
 	DISPLAY_INI_ENTRIES();
