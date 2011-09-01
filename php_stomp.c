@@ -327,7 +327,7 @@ static void stomp_object_free_storage(stomp_object_t *intern TSRMLS_DC)
 }
 
 	 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION == 3 && PHP_RELEASE_VERSION >= 99) || (PHP_MAJOR_VERSION > 5)
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4) || (PHP_MAJOR_VERSION > 5)
 #define PHP_STOMP_RUNTIME_CACHE 
 #endif 
 static zend_object_value php_stomp_new(zend_class_entry *ce TSRMLS_DC)
