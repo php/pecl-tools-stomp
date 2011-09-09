@@ -7,4 +7,4 @@ Test stomp_version()
 echo stomp_version();
 ?>
 --EXPECTF--
-%d.%d.%d
+%d.%d.%s
