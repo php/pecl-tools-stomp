@@ -1,5 +1,6 @@
 - Add the ability to connect to a network of brokers
     (Cf: http://activemq.apache.org/networks-of-brokers.html)
+- Add Stomp 1.1 full support
 
 - Review tests to work on every message broker
     - ActimeMQ
