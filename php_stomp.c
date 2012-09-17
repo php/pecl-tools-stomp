@@ -290,6 +290,9 @@ static PHP_GINIT_FUNCTION(stomp)
 	stomp_globals->read_timeout_usec = 0;
 	stomp_globals->connection_timeout_sec = 2;
 	stomp_globals->connection_timeout_usec = 0;
+#if HAVE_STOMP_SSL
+	SSL_library_init();
+#endif
 }
 /* }}} */
 
