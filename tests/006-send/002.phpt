@@ -14,8 +14,6 @@ $s->send('/queue/test-06', array());
 var_dump($s->send('/queue/test-06', ''));
 var_dump($s->send('/queue/test-06', 'A realMessage'));
 var_dump($s->send('/queue/test-06', 'بياريك شارون'));
-var_dump($s->send('بياريك شارون', 'بياريك شارون', array('receipt' => 'message-123')));
-echo gettype($s->error());
 
 ?>
 --EXPECTF--
@@ -25,5 +23,3 @@ Warning: Stomp::send(): Expects parameter %d to be a string or a StompFrame obje
 bool(true)
 bool(true)
 bool(true)
-bool(false)
-string
