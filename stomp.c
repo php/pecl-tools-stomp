@@ -285,7 +285,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	}
 
 	if (frame->body_length > 0) {
-		smart_str_appends(&buf, "content-length: ");
+		smart_str_appends(&buf, "content-length:");
 		smart_str_append_long(&buf, frame->body_length);
 		smart_str_appendc(&buf, '\n');
 	}
@@ -293,7 +293,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	smart_str_appendc(&buf, '\n');
 
 	if (frame->body > 0) {
-		smart_str_appends(&buf, frame->body);
+		smart_str_appendl(&buf, frame->body, frame->body_length > 0 ? frame->body_length : strlen(frame->body));
 	}
 
 	if (!stomp_writeable(stomp)) {
@@ -552,7 +552,7 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	}
 
 	/* Check for the content length */
-	if (zend_hash_find(f->headers, "content-length", strlen("content-length"), (void **)&length_str) == SUCCESS) {
+	if (zend_hash_find(f->headers, "content-length", sizeof("content-length"), (void **)&length_str) == SUCCESS) {
 		char endbuffer[2];
 		length = 2;
 

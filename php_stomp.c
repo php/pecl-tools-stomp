@@ -686,7 +686,7 @@ PHP_FUNCTION(stomp_send)
 	 
 	if (Z_TYPE_P(msg) == IS_STRING) {
 		frame.body = Z_STRVAL_P(msg);
-		frame.body_length = -1;
+		frame.body_length = Z_STRLEN_P(msg);
 	} else if (Z_TYPE_P(msg) == IS_OBJECT && instanceof_function(Z_OBJCE_P(msg), stomp_ce_frame TSRMLS_CC)) {
 		zval *frame_obj_prop = NULL;
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "command", sizeof("command")-1, 1 TSRMLS_CC);
@@ -697,7 +697,7 @@ PHP_FUNCTION(stomp_send)
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "body", sizeof("body")-1, 1 TSRMLS_CC);
 		if (Z_TYPE_P(frame_obj_prop) == IS_STRING) {
 			frame.body = Z_STRVAL_P(frame_obj_prop);
-			frame.body_length = -1;
+			frame.body_length = Z_STRLEN_P(frame_obj_prop);
 		}
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1 TSRMLS_CC);
 		if (Z_TYPE_P(frame_obj_prop) == IS_ARRAY) {
@@ -993,7 +993,7 @@ PHP_FUNCTION(stomp_read_frame)
 			array_init(return_value);
 			add_assoc_string_ex(return_value, "command", sizeof("command"), res->command, 1);
 			if (res->body) {
-				add_assoc_string_ex(return_value, "body", sizeof("body"), res->body, 1);
+				add_assoc_stringl_ex(return_value, "body", sizeof("body"), res->body, res->body_length, 1);
 			}
 			add_assoc_zval_ex(return_value, "headers", sizeof("headers"), headers);
 		}
