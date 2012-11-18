@@ -45,6 +45,19 @@ typedef struct _stomp_options {
 #endif    
 } stomp_options_t;
 
+typedef struct _stomp_frame {
+	char *command;
+	int command_length;
+	HashTable *headers;
+	char *body;
+	int body_length;
+} stomp_frame_t;
+
+typedef struct _stomp_frame_cell {
+	stomp_frame_t *frame;
+	struct _stomp_frame_cell *next;
+} stomp_frame_cell_t;
+
 typedef struct _stomp {
 	php_socket_t fd;    
 	php_sockaddr_storage localaddr;
@@ -59,16 +72,8 @@ typedef struct _stomp {
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
 #endif
+	stomp_frame_cell_t *buffer;
 } stomp_t;
-
-
-typedef struct _stomp_frame {
-	char *command;
-	int command_length;
-	HashTable *headers;
-	char *body;
-	int body_length;
-} stomp_frame_t;
 
 stomp_t *stomp_init();
 int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC);
