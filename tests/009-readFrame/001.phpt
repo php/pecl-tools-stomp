@@ -9,7 +9,7 @@ Test stomp::readFrame() - tests functionnality and parameters
 <?php 
 $s = new Stomp();
 $s->send('/queue/test-09', 'A test Message');
-$s->subscribe('/queue/test-09');
+$s->subscribe('/queue/test-09', array('ack' => 'auto'));
 var_dump($s->readFrame()->body);
 var_dump($s->readFrame());
 
