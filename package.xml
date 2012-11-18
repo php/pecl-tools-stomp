@@ -12,11 +12,16 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>XXXX-XX-XX</date>
-    <version><release>1.0.X</release><api>1.0.X</api></version>
+    <date>2012-11-18</date>
+    <version><release>1.0.5</release><api>1.0.5</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
+- Fix memory leak when Stomp can't write the message on the queue. (Pierrick)
+- Add a buffer for receipts. (Pierrick)
+- Fixed bug #62831 (Stomp module seems not initializing SSL library first).
+  (Patch by lwhsu at lwhsu dot org)
+- Fixed bug #59972 (Message body are not binary safe). (Pierrick)
     </notes>
     <contents>
         <dir name="/">
@@ -41,6 +46,8 @@ This extension allows php applications to communicate with any Stomp compliant M
             <file role="test" name="tests/009-readFrame/001.phpt" />
             <file role="test" name="tests/009-readFrame/002.phpt" />
             <file role="test" name="tests/009-readFrame/003.phpt" />
+            <file role="test" name="tests/009-readFrame/004.phpt" />
+            <file role="test" name="tests/009-readFrame/005.phpt" />
             <file role="test" name="tests/010-timeout/001.phpt" />
             <file role="test" name="tests/010-timeout/002.phpt" />
             <file role="test" name="tests/011-commit/001.phpt" />
@@ -74,6 +81,19 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>1.0.5</release><api>1.0.5</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2012-11-18</date>
+            <notes>
+- Fix memory leak when Stomp can't write the message on the queue. (Pierrick)
+- Add a buffer for receipts. (Pierrick)
+- Fixed bug #62831 (Stomp module seems not initializing SSL library first).
+  (Patch by lwhsu at lwhsu dot org)
+- Fixed bug #59972 (Message body are not binary safe). (Pierrick)
+            </notes>
+        </release>
 		<release>
 			<version><release>1.0.4</release><api>1.0.4</api></version>
 			<stability><release>stable</release><api>stable</api></stability>
