@@ -81,9 +81,11 @@ void stomp_close(stomp_t *stomp);
 int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
 stomp_frame_t *stomp_read_frame(stomp_t *connection);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);
-int stomp_select(stomp_t *connection);
+int stomp_select_ex(stomp_t *connection, const long int sec, const long int usec);
 void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *details);
 void stomp_free_frame(stomp_frame_t *frame);
+
+#define stomp_select(s) stomp_select_ex(s, s->options.read_timeout_sec, s->options.read_timeout_sec)
 #endif /* _STOMP_H_ */
 
 /*

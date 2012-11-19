@@ -379,10 +379,12 @@ static int stomp_read_buffer(stomp_t *stomp, char **data)
 			i++;
 
 			if (buffer[i-1] == 0) {
-				char endline[1];
-				if (1 != stomp_recv(stomp, endline, 1) && '\n' != endline[0]) {
-					efree(buffer);
-					return 0;
+				if (stomp_select_ex(stomp, 0, 0)) {
+					char endline[1];
+					if (1 != stomp_recv(stomp, endline, 1) && '\n' != endline[0]) {
+						efree(buffer);
+						return 0;
+					}
 				}
 				break;
 			}
@@ -555,7 +557,6 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	if (zend_hash_find(f->headers, "content-length", sizeof("content-length"), (void **)&length_str) == SUCCESS) {
 		int recv = 0;
 		char endbuffer[2];
-		length = 2;
 
 		f->body_length = atoi(length_str);
 		f->body = (char *) emalloc(f->body_length);
@@ -569,9 +570,11 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 			}
 		}
 
-		if (length != stomp_recv(stomp, endbuffer, length) || endbuffer[0] != '\0' || endbuffer[1] != '\n') {
+		length = stomp_recv(stomp, endbuffer, 2);
+		if (endbuffer[0] != '\0' || ((2 == length) && (endbuffer[1] != '\n'))) {
 			RETURN_READ_FRAME_FAIL;
 		}
+
 	} else {
 		f->body_length = stomp_read_buffer(stomp, &f->body);
 	}
@@ -629,7 +632,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 
 /* {{{ stomp_select
  */
-int stomp_select(stomp_t *stomp)
+int stomp_select_ex(stomp_t *stomp, const long int sec, const long int usec)
 {
 	int     n;
 	struct timeval tv;
@@ -637,9 +640,8 @@ int stomp_select(stomp_t *stomp)
 	if (stomp->buffer) {
 		return 1;
 	}
-
-	tv.tv_sec = stomp->options.read_timeout_sec;
-	tv.tv_usec = stomp->options.read_timeout_usec;
+	tv.tv_sec = sec;
+	tv.tv_usec = usec;
 
 	n = php_pollfd_for(stomp->fd, PHP_POLLREADABLE, &tv);
 	if (n < 1) {
@@ -650,7 +652,6 @@ int stomp_select(stomp_t *stomp)
 #endif          
 		return 0;
 	}
-
 	return 1;
 }
 /* }}} */

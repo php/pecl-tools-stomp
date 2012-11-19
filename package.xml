@@ -17,7 +17,10 @@ This extension allows php applications to communicate with any Stomp compliant M
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
+- Add two new ini options stomp.default_username and stomp.default_passowrd (Pierrick)
 - Fix stomp_read_frame when buffered (Pierrick)
+- Fixed bug #59217 (Connections to RabbitMQ via CLI). (Pierrick).
+- Fixed bug #59970 (acking a message makes rabbitmq disconnect the server). (Pierrick)
     </notes>
     <contents>
         <dir name="/">
