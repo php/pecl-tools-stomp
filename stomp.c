@@ -126,9 +126,9 @@ void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *
 }
 /* }}} */
 
-/* {{{ stomp_writeable 
+/* {{{ stomp_writable 
  */
-int stomp_writeable(stomp_t *stomp) 
+int stomp_writable(stomp_t *stomp) 
 {
 	int     n;
 
@@ -182,7 +182,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		return 0; 
 	}
 
-	if (stomp_writeable(stomp)) {
+	if (stomp_writable(stomp)) {
 #if HAVE_STOMP_SSL
 		if (stomp->options.use_ssl) {
 			SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
@@ -296,7 +296,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		smart_str_appendl(&buf, frame->body, frame->body_length > 0 ? frame->body_length : strlen(frame->body));
 	}
 
-	if (!stomp_writeable(stomp)) {
+	if (!stomp_writable(stomp)) {
 		char error[1024];
 		snprintf(error, sizeof(error), "Unable to send data");
 		stomp_set_error(stomp, error, errno, NULL);
