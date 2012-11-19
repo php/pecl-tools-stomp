@@ -97,6 +97,8 @@ ZEND_BEGIN_MODULE_GLOBALS(stomp)
 	long read_timeout_usec;
 	long connection_timeout_sec;
 	long connection_timeout_usec;
+	char *default_username;
+	char *default_password;
 
 	/* Others */
 	long error_no;

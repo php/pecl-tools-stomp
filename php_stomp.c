@@ -276,6 +276,8 @@ zend_module_entry stomp_module_entry = {
 
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("stomp.default_broker", "tcp://localhost:61613", PHP_INI_ALL, OnUpdateString, default_broker, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_username", "", PHP_INI_ALL, OnUpdateString, default_username, zend_stomp_globals, stomp_globals)
+STD_PHP_INI_ENTRY("stomp.default_password", "", PHP_INI_ALL, OnUpdateString, default_password, zend_stomp_globals, stomp_globals)
 STD_PHP_INI_ENTRY("stomp.default_read_timeout_sec", "2", PHP_INI_ALL, OnUpdateLong, read_timeout_sec, zend_stomp_globals, stomp_globals)
 STD_PHP_INI_ENTRY("stomp.default_read_timeout_usec", "0", PHP_INI_ALL, OnUpdateLong, read_timeout_usec, zend_stomp_globals, stomp_globals)
 STD_PHP_INI_ENTRY("stomp.default_connection_timeout_sec", "2", PHP_INI_ALL, OnUpdateLong, connection_timeout_sec, zend_stomp_globals, stomp_globals)
@@ -286,6 +288,8 @@ PHP_INI_END()
 static PHP_GINIT_FUNCTION(stomp)
 {
 	stomp_globals->default_broker = NULL;
+	stomp_globals->default_username = NULL;
+	stomp_globals->default_password = NULL;
 	stomp_globals->read_timeout_sec = 2;
 	stomp_globals->read_timeout_usec = 0;
 	stomp_globals->connection_timeout_sec = 2;
@@ -515,11 +519,13 @@ PHP_FUNCTION(stomp_connect)
 		stomp_frame_t frame = {0};
  
 		INIT_FRAME(frame, "CONNECT");
-		if (username_len == 0) {
-			username = "";
+		if (!username) {
+			username = STOMP_G(default_username);
+			username_len = strlen(username);
 		}
-		if (password_len == 0) {
-			password = "";
+		if (!password) {
+			password = STOMP_G(default_password);
+			password_len = strlen(password);
 		}
 		zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
 		zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
