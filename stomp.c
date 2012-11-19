@@ -553,14 +553,20 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 
 	/* Check for the content length */
 	if (zend_hash_find(f->headers, "content-length", sizeof("content-length"), (void **)&length_str) == SUCCESS) {
+		int recv = 0;
 		char endbuffer[2];
 		length = 2;
 
 		f->body_length = atoi(length_str);
 		f->body = (char *) emalloc(f->body_length);
 
-		if (-1 == stomp_recv(stomp, f->body, f->body_length)) {
-			RETURN_READ_FRAME_FAIL;
+		while (recv != f->body_length) {
+			int l = stomp_recv(stomp, f->body + recv, f->body_length - recv);
+			if (-1 == l) {
+				RETURN_READ_FRAME_FAIL;
+			} else {
+				recv += l;
+			}
 		}
 
 		if (length != stomp_recv(stomp, endbuffer, length) || endbuffer[0] != '\0' || endbuffer[1] != '\n') {

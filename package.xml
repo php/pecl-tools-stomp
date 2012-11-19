@@ -17,6 +17,7 @@ This extension allows php applications to communicate with any Stomp compliant M
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
+- Fix stomp_read_frame when buffered (Pierrick)
     </notes>
     <contents>
         <dir name="/">
