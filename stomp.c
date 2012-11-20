@@ -285,7 +285,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	}
 
 	if (frame->body_length > 0) {
-		smart_str_appends(&buf, "content-length:");
+		smart_str_appendl(&buf, "content-length:", sizeof("content-length:") - 1);
 		smart_str_append_long(&buf, frame->body_length);
 		smart_str_appendc(&buf, '\n');
 	}
@@ -295,6 +295,8 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	if (frame->body > 0) {
 		smart_str_appendl(&buf, frame->body, frame->body_length > 0 ? frame->body_length : strlen(frame->body));
 	}
+
+	smart_str_appendl(&buf, "\0\n", sizeof("\0\n")-1);
 
 	if (!stomp_writable(stomp)) {
 		char error[1024];
@@ -306,7 +308,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 
 #ifdef HAVE_STOMP_SSL
 	if (stomp->options.use_ssl) {
-		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len) || -1 == SSL_write(stomp->ssl_handle, "\0\n", 2)) {
+		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len)) {
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
 			stomp_set_error(stomp, error, errno, NULL);
@@ -315,7 +317,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		}
 	} else {
 #endif        
-		if (-1 == send(stomp->fd, buf.c, buf.len, 0) || -1 == send(stomp->fd, "\0\n", 2, 0)) {
+		if (-1 == send(stomp->fd, buf.c, buf.len, 0)) {
 			char error[1024];
 			snprintf(error, sizeof(error), "Unable to send data");
 			stomp_set_error(stomp, error, errno, NULL);
