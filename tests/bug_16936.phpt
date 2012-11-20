@@ -19,7 +19,7 @@ try {
 $stomp->send($queue, $msg);
 
 /* subscribe to messages from the queue 'foo' */
-$stomp->subscribe($queue);
+$stomp->subscribe($queue, array('ack' => 'auto'));
 
 /* read a frame */
 $frame = $stomp->readFrame();
