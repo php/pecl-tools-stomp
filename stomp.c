@@ -60,6 +60,7 @@ stomp_t *stomp_init()
 #endif
 
 	stomp->frame_stack = NULL;
+	stomp->read_buffer.size = 0;
 	return stomp;
 }
 /* }}} */
@@ -336,9 +337,11 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 
 /* {{{ stomp_recv
  */
-int stomp_recv(stomp_t *stomp, char *msg, size_t length)
+static int stomp_recv_no_buffer(stomp_t *stomp, char *msg, const size_t length)
 {
 	int len;
+
+	stomp_select(stomp);
 
 #if HAVE_STOMP_SSL
 	if(stomp->options.use_ssl) {
@@ -356,6 +359,40 @@ int stomp_recv(stomp_t *stomp, char *msg, size_t length)
 		stomp->status = -1;
 	}
 	return len;
+}
+
+int stomp_recv(stomp_t *stomp, char *msg, const size_t length) 
+{
+	if (stomp->read_buffer.size == 0) {
+		if (length >= STOMP_BUFSIZE) {
+			return stomp_recv_no_buffer(stomp, msg, length);
+		} else {
+			int recv_size = stomp_recv_no_buffer(stomp, stomp->read_buffer.buf, STOMP_BUFSIZE);
+			if (recv_size <= length) {
+				memcpy(msg, stomp->read_buffer.buf, recv_size);
+				return recv_size;
+			} else {
+				memcpy(msg, stomp->read_buffer.buf, length);
+				stomp->read_buffer.pos = stomp->read_buffer.buf + length;
+				stomp->read_buffer.size = recv_size - length;
+				return length;
+			}
+		}
+	} else if (stomp->read_buffer.size >= length) {
+		memcpy(msg, stomp->read_buffer.pos, length);
+		stomp->read_buffer.pos += length;
+		stomp->read_buffer.size -= length;
+		return length;
+	} else {
+		int len = stomp->read_buffer.size;
+		memcpy(msg, stomp->read_buffer.pos, stomp->read_buffer.size);
+		stomp->read_buffer.size = 0;
+		if (stomp_select_ex(stomp, 0, 0)) {
+			return len + stomp_recv(stomp, msg + len, length - len);
+		} else {
+			return len;
+		}
+	}
 }
 /* }}} */
 
@@ -639,7 +676,7 @@ int stomp_select_ex(stomp_t *stomp, const long int sec, const long int usec)
 	int     n;
 	struct timeval tv;
 
-	if (stomp->frame_stack) {
+	if (stomp->read_buffer.size || stomp->frame_stack) {
 		return 1;
 	}
 	tv.tv_sec = sec;
