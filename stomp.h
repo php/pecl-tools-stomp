@@ -73,6 +73,11 @@ typedef struct _stomp {
 	SSL *ssl_handle;
 #endif
 	stomp_frame_stack_t *frame_stack;
+	struct {
+		size_t size;
+		char buf[STOMP_BUFSIZE];
+		char *pos;
+	} read_buffer;
 } stomp_t;
 
 stomp_t *stomp_init();
