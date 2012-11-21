@@ -297,7 +297,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 		smart_str_appendl(&buf, frame->body, frame->body_length > 0 ? frame->body_length : strlen(frame->body));
 	}
 
-	smart_str_appendl(&buf, "\0\n", sizeof("\0\n")-1);
+	smart_str_appendl(&buf, "\0", sizeof("\0")-1);
 
 	if (!stomp_writable(stomp)) {
 		char error[1024];
