@@ -53,10 +53,10 @@ typedef struct _stomp_frame {
 	int body_length;
 } stomp_frame_t;
 
-typedef struct _stomp_frame_cell {
+typedef struct _stomp_frame_stack {
 	stomp_frame_t *frame;
-	struct _stomp_frame_cell *next;
-} stomp_frame_cell_t;
+	struct _stomp_frame_stack *next;
+} stomp_frame_stack_t;
 
 typedef struct _stomp {
 	php_socket_t fd;    
@@ -72,7 +72,7 @@ typedef struct _stomp {
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
 #endif
-	stomp_frame_cell_t *buffer;
+	stomp_frame_stack_t *frame_stack;
 } stomp_t;
 
 stomp_t *stomp_init();

@@ -59,36 +59,36 @@ stomp_t *stomp_init()
 	stomp->ssl_handle = NULL;
 #endif
 
-	stomp->buffer = NULL;
+	stomp->frame_stack = NULL;
 	return stomp;
 }
 /* }}} */
 
-/* {{{ stomp_frame_buffer_push
+/* {{{ stomp_frame_stack_push
  */
-void stomp_frame_buffer_push(stomp_frame_cell_t **pcell, stomp_frame_t *frame)
+void stomp_frame_stack_push(stomp_frame_stack_t **stack, stomp_frame_t *frame)
 {
-	stomp_frame_cell_t *cell = (stomp_frame_cell_t *) emalloc(sizeof(stomp_frame_cell_t));
+	stomp_frame_stack_t *cell = (stomp_frame_stack_t *) emalloc(sizeof(stomp_frame_stack_t));
 	cell->frame = frame;
 	cell->next = NULL;
 
-	if (!*pcell) {
-		*pcell = cell;
+	if (!*stack) {
+		*stack = cell;
 	} else {
-		stomp_frame_cell_t *cursor = *pcell;
+		stomp_frame_stack_t *cursor = *stack;
 		while (cursor->next != NULL) cursor = cursor->next;
 		cursor->next = cell;
 	}
 }
 /* }}} */
 
-/* {{{ stomp_frame_buffer_shift
+/* {{{ stomp_frame_stack_shift
  */
-stomp_frame_t *stomp_frame_buffer_shift(stomp_frame_cell_t **pcell) {
+stomp_frame_t *stomp_frame_stack_shift(stomp_frame_stack_t **stack) {
 	stomp_frame_t *frame = NULL;
-	if (*pcell) {
-		stomp_frame_cell_t *cell = *pcell;
-		*pcell = cell->next;
+	if (*stack) {
+		stomp_frame_stack_t *cell = *stack;
+		*stack = cell->next;
 		frame = cell->frame;
 		efree(cell);
 	}
@@ -96,11 +96,11 @@ stomp_frame_t *stomp_frame_buffer_shift(stomp_frame_cell_t **pcell) {
 }
 /* }}} */
 
-/* {{{ stomp_frame_buffer_clear
+/* {{{ stomp_frame_stack_clear
  */
-void stomp_frame_buffer_clear(stomp_frame_cell_t **pcell) {
+void stomp_frame_stack_clear(stomp_frame_stack_t **stack) {
 	stomp_frame_t *frame = NULL;
-	while (frame = stomp_frame_buffer_shift(pcell)) efree(frame);
+	while (frame = stomp_frame_stack_shift(stack)) efree(frame);
 }
 /* }}} */
 
@@ -246,7 +246,7 @@ void stomp_close(stomp_t *stomp)
 	if (stomp->error_details) {
 		efree(stomp->error_details);
 	}
-	stomp_frame_buffer_clear(&stomp->buffer);
+	stomp_frame_stack_clear(&stomp->frame_stack);
 	efree(stomp);
 }
 /* }}} */
@@ -496,8 +496,8 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	char *cmd = NULL, *length_str = NULL;
 	int length = 0;
 
-	if (stomp->buffer) {
-		return stomp_frame_buffer_shift(&stomp->buffer);
+	if (stomp->frame_stack) {
+		return stomp_frame_stack_shift(&stomp->frame_stack);
 	}
 
 	if (!stomp_select(stomp)) {
@@ -593,7 +593,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 	char *receipt = NULL;
 
 	if (zend_hash_find(frame->headers, "receipt", sizeof("receipt"), (void **)&receipt) == SUCCESS) {
-		stomp_frame_cell_t *buffer = NULL;
+		stomp_frame_stack_t *stack = NULL;
 		success = 0;
 		while (1) {
 			stomp_frame_t *res = stomp_read_frame(stomp);
@@ -609,7 +609,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 						stomp_set_error(stomp, error, 0, NULL);
 					}
 					stomp_free_frame(res);
-					stomp->buffer = buffer;
+					stomp->frame_stack = stack;
 					return success;
 				} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 					char *error_msg = NULL;
@@ -617,13 +617,13 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 						stomp_set_error(stomp, error_msg, 0, res->body);
 					}
 					stomp_free_frame(res);
-					stomp->buffer = buffer;
+					stomp->frame_stack = stack;
 					return success;
 				} else {
-					stomp_frame_buffer_push(&buffer, res);
+					stomp_frame_stack_push(&stack, res);
 				}
 			} else {
-				stomp->buffer = buffer;
+				stomp->frame_stack = stack;
 				return success;
 			}
 		}
@@ -639,7 +639,7 @@ int stomp_select_ex(stomp_t *stomp, const long int sec, const long int usec)
 	int     n;
 	struct timeval tv;
 
-	if (stomp->buffer) {
+	if (stomp->frame_stack) {
 		return 1;
 	}
 	tv.tv_sec = sec;
