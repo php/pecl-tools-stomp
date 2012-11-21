@@ -101,7 +101,7 @@ stomp_frame_t *stomp_frame_stack_shift(stomp_frame_stack_t **stack) {
  */
 void stomp_frame_stack_clear(stomp_frame_stack_t **stack) {
 	stomp_frame_t *frame = NULL;
-	while (frame = stomp_frame_stack_shift(stack)) efree(frame);
+	while ((frame = stomp_frame_stack_shift(stack))) efree(frame);
 }
 /* }}} */
 
@@ -367,7 +367,7 @@ int stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 		if (length >= STOMP_BUFSIZE) {
 			return _stomp_recv(stomp, msg, length);
 		} else {
-			int recv_size = _stomp_recv(stomp, stomp->read_buffer.buf, STOMP_BUFSIZE);
+			size_t recv_size = _stomp_recv(stomp, stomp->read_buffer.buf, STOMP_BUFSIZE);
 			if (recv_size <= length) {
 				memcpy(msg, stomp->read_buffer.buf, recv_size);
 				return recv_size;
@@ -405,9 +405,9 @@ static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimite
 	char *buffer = (char *) emalloc(STOMP_BUFSIZE);
 
 	while (1) {
-		int i, found;
-		found = 0;
+		unsigned int i, found;
 		char *c;
+		found = 0;
 
 		// First populate the buffer
 		if (stomp->read_buffer.size == 0) {
@@ -587,18 +587,18 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 
 	/* Check for the content length */
 	if (zend_hash_find(f->headers, "content-length", sizeof("content-length"), (void **)&length_str) == SUCCESS) {
-		int recv = 0;
+		int recv_size = 0;
 		char endbuffer[2];
 
 		f->body_length = atoi(length_str);
 		f->body = (char *) emalloc(f->body_length);
 
-		while (recv != f->body_length) {
-			int l = stomp_recv(stomp, f->body + recv, f->body_length - recv);
+		while (recv_size != f->body_length) {
+			int l = stomp_recv(stomp, f->body + recv_size, f->body_length - recv_size);
 			if (-1 == l) {
 				RETURN_READ_FRAME_FAIL;
 			} else {
-				recv += l;
+				recv_size += l;
 			}
 		}
 
