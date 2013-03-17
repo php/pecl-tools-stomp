@@ -62,7 +62,9 @@
 				SEPARATE_ZVAL(value); \
 				convert_to_string(*value); \
 			} \
-			zend_hash_add(h, string_key, strlen(string_key)+1, Z_STRVAL_PP(value), Z_STRLEN_PP(value)+1, NULL); \
+			if (strcmp(string_key, "content-length") != 0) { \
+				zend_hash_add(h, string_key, strlen(string_key)+1, Z_STRVAL_PP(value), Z_STRLEN_PP(value)+1, NULL); \
+			}\
 			efree(string_key); \
 		} \
 	} 
