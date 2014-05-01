@@ -27,6 +27,7 @@
 #include "ext/standard/php_smart_str.h"
 #include "stomp.h"
 #include "php_stomp.h"
+#include <netinet/tcp.h>
 
 #define RETURN_READ_FRAME_FAIL { stomp_free_frame(f); return NULL; }
 
@@ -174,6 +175,8 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		stomp_set_error(stomp, error, errno, NULL);
 		return 0;
 	}
+	int flag = 1;
+	setsockopt(stomp->fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
 	size = sizeof(stomp->localaddr);
 	memset(&stomp->localaddr, 0, size);
