@@ -24,6 +24,7 @@ This extension allows php applications to communicate with any Stomp compliant M
 - Fixed bug #59970 (acking a message makes rabbitmq disconnect the server). (Pierrick)
 - Fixed bug #67170 (Disable Nagle's Algorithm with TCP_NODELAY, it delays sending small messages). (Yarek Tyshchenko)
 - Fixed bug #68497 (Stomp client doesn't parse ERROR response on CONNECT). (Lorenzo Fontana)
+- Fixed bug #64671 (Add stomp_nack and Stomp::nack functions). (Pierrick)
     </notes>
     <contents>
         <dir name="/">

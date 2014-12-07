@@ -82,6 +82,7 @@ PHP_FUNCTION(stomp_begin);
 PHP_FUNCTION(stomp_commit);
 PHP_FUNCTION(stomp_abort);
 PHP_FUNCTION(stomp_ack);
+PHP_FUNCTION(stomp_nack);
 PHP_FUNCTION(stomp_error);
 PHP_FUNCTION(stomp_set_read_timeout);
 PHP_FUNCTION(stomp_get_read_timeout);

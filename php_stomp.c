@@ -177,6 +177,17 @@ ZEND_ARG_INFO(0, msg)
 ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(stomp_nack_args, 0, 0, 2)
+ZEND_ARG_INFO(0, link)
+ZEND_ARG_INFO(0, msg)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(stomp_oop_nack_args, 0, 0, 1)
+ZEND_ARG_INFO(0, msg)
+ZEND_ARG_ARRAY_INFO(0, headers, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(stomp_set_read_timeout_args, 0, 0, 2)
 ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, seconds)
@@ -211,6 +222,7 @@ zend_function_entry stomp_functions[] = {
 	PHP_FE(stomp_commit,            stomp_transaction_args)
 	PHP_FE(stomp_abort,             stomp_transaction_args)
 	PHP_FE(stomp_ack,               stomp_ack_args)
+	PHP_FE(stomp_nack,              stomp_nack_args)
 	PHP_FE(stomp_error,             stomp_link_only)
 	PHP_FE(stomp_set_read_timeout,  stomp_set_read_timeout_args)
 	PHP_FE(stomp_get_read_timeout,  stomp_link_only)
@@ -232,6 +244,7 @@ static zend_function_entry stomp_methods[] = {
 	PHP_FALIAS(commit,          stomp_commit,            stomp_oop_transaction_args)
 	PHP_FALIAS(abort,           stomp_abort,             stomp_oop_transaction_args)
 	PHP_FALIAS(ack,             stomp_ack,               stomp_oop_ack_args)
+	PHP_FALIAS(nack,            stomp_nack,              stomp_oop_nack_args)
 	PHP_FALIAS(error,           stomp_error,             stomp_no_args)
 	PHP_FALIAS(setReadTimeout,  stomp_set_read_timeout,  stomp_oop_set_read_timeout_args)
 	PHP_FALIAS(getReadTimeout,  stomp_get_read_timeout,  stomp_no_args)
@@ -1092,10 +1105,9 @@ PHP_FUNCTION(stomp_abort)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::ack(mixed msg [, array headers])
-   Acknowledge consumption of a message from a subscription using client acknowledgment */
-PHP_FUNCTION(stomp_ack)
-{
+/* {{{ _php_stomp_acknowledgment 
+ */
+static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 	zval *stomp_object = getThis();
 	zval *msg = NULL, *headers = NULL;
 	stomp_t *stomp = NULL;
@@ -1116,7 +1128,7 @@ PHP_FUNCTION(stomp_ack)
 		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
 	}
 
-	INIT_FRAME(frame, "ACK");
+	INIT_FRAME(frame, cmd);
 
 	if (NULL != headers) {
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
@@ -1141,6 +1153,22 @@ PHP_FUNCTION(stomp_ack)
 
 	CLEAR_FRAME(frame);
 	RETURN_BOOL(success);
+}
+/* }}} */
+
+/* {{{ proto boolean Stomp::ack(mixed msg [, array headers])
+   Acknowledge consumption of a message from a subscription using client acknowledgment */
+PHP_FUNCTION(stomp_ack)
+{
+	_php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAM_PASSTHRU, "ACK");
+}
+/* }}} */
+
+/* {{{ proto boolean Stomp::nack(mixed msg [, array headers])
+   Negative Acknowledgment of a message from a subscription */
+PHP_FUNCTION(stomp_nack)
+{
+	_php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAM_PASSTHRU, "NACK");
 }
 /* }}} */
 
