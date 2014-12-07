@@ -211,6 +211,7 @@ zend_function_entry stomp_functions[] = {
 	PHP_FE(stomp_commit,            stomp_transaction_args)
 	PHP_FE(stomp_abort,             stomp_transaction_args)
 	PHP_FE(stomp_ack,               stomp_ack_args)
+	PHP_FALIAS(stomp_nack, stomp_ack, stomp_ack_args)
 	PHP_FE(stomp_error,             stomp_link_only)
 	PHP_FE(stomp_set_read_timeout,  stomp_set_read_timeout_args)
 	PHP_FE(stomp_get_read_timeout,  stomp_link_only)
@@ -232,6 +233,7 @@ static zend_function_entry stomp_methods[] = {
 	PHP_FALIAS(commit,          stomp_commit,            stomp_oop_transaction_args)
 	PHP_FALIAS(abort,           stomp_abort,             stomp_oop_transaction_args)
 	PHP_FALIAS(ack,             stomp_ack,               stomp_oop_ack_args)
+	PHP_FALIAS(nack,            stomp_ack,               stomp_oop_ack_args)
 	PHP_FALIAS(error,           stomp_error,             stomp_no_args)
 	PHP_FALIAS(setReadTimeout,  stomp_set_read_timeout,  stomp_oop_set_read_timeout_args)
 	PHP_FALIAS(getReadTimeout,  stomp_get_read_timeout,  stomp_no_args)
@@ -1101,22 +1103,29 @@ PHP_FUNCTION(stomp_ack)
 	stomp_t *stomp = NULL;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
+	const char *argv0;
 
 	if (stomp_object) {
 		stomp_object_t *i_obj = NULL;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a!", &msg, &headers) == FAILURE) {
 			return;
-		} 
+		}
+		argv0 = EG(current_execute_data)->function_state.function->common.function_name;
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg = NULL;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz|a!", &arg, &msg, &headers) == FAILURE) {
 			return;
 		}
+		argv0 = EG(current_execute_data)->function_state.function->common.function_name + 6;
 		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
 	}
 
-	INIT_FRAME(frame, "ACK");
+	if (argv0[0] == 'a') {
+		INIT_FRAME(frame, "ACK");
+	} else {
+		INIT_FRAME(frame, "NACK");
+	}
 
 	if (NULL != headers) {
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
