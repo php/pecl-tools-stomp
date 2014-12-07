@@ -565,7 +565,6 @@ PHP_FUNCTION(stomp_connect)
 				}
 
 				stomp_free_frame(res);
-				RETURN_FALSE;
 			}
 		} else if (0 != strncmp("CONNECTED", res->command, sizeof("CONNECTED")-1)) {
 			if (stomp->error) {
