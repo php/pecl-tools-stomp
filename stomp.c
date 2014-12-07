@@ -23,7 +23,6 @@
 #endif
 
 #include "php.h"
-#include "zend_exceptions.h"
 #include "ext/standard/php_smart_str.h"
 #include "stomp.h"
 #include "php_stomp.h"
@@ -36,7 +35,7 @@ extern zend_class_entry *stomp_ce_exception;
 
 /* {{{ stomp_init
  */
-stomp_t *stomp_init() 
+stomp_t *stomp_init()
 {
 	/* Memory allocation */
 	stomp_t *stomp = (stomp_t *) emalloc(sizeof(stomp_t));
@@ -68,7 +67,7 @@ stomp_t *stomp_init()
 
 /* {{{ stomp_frame_stack_push
  */
-void stomp_frame_stack_push(stomp_frame_stack_t **stack, stomp_frame_t *frame)
+static void stomp_frame_stack_push(stomp_frame_stack_t **stack, stomp_frame_t *frame)
 {
 	stomp_frame_stack_t *cell = (stomp_frame_stack_t *) emalloc(sizeof(stomp_frame_stack_t));
 	cell->frame = frame;
@@ -86,7 +85,7 @@ void stomp_frame_stack_push(stomp_frame_stack_t **stack, stomp_frame_t *frame)
 
 /* {{{ stomp_frame_stack_shift
  */
-stomp_frame_t *stomp_frame_stack_shift(stomp_frame_stack_t **stack) {
+static stomp_frame_t *stomp_frame_stack_shift(stomp_frame_stack_t **stack) {
 	stomp_frame_t *frame = NULL;
 	if (*stack) {
 		stomp_frame_stack_t *cell = *stack;
@@ -100,20 +99,23 @@ stomp_frame_t *stomp_frame_stack_shift(stomp_frame_stack_t **stack) {
 
 /* {{{ stomp_frame_stack_clear
  */
-void stomp_frame_stack_clear(stomp_frame_stack_t **stack) {
+static void stomp_frame_stack_clear(stomp_frame_stack_t **stack) {
 	stomp_frame_t *frame = NULL;
 	while ((frame = stomp_frame_stack_shift(stack))) efree(frame);
 }
 /* }}} */
 
-/* {{{ stomp_set_error 
+/* {{{ stomp_set_error
  */
-void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *details) 
+void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *fmt, ...)
 {
+	va_list ap;
+	int len;
+
 	if (stomp->error != NULL) {
 		efree(stomp->error);
 		stomp->error = NULL;
-	}   
+	}
 	if (stomp->error_details != NULL) {
 		efree(stomp->error_details);
 		stomp->error_details = NULL;
@@ -122,15 +124,28 @@ void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *
 	if (error != NULL) {
 		stomp->error = estrdup(error);
 	}
-	if (details != NULL) {
-		stomp->error_details = estrdup(details);
+	if (fmt != NULL) {
+		stomp->error_details = emalloc(STOMP_BUFSIZE);
+		if (stomp->error_details == NULL) {
+			return; /* Nothing else can be done */
+		}
+		va_start(ap, fmt);
+		/*
+		 * Would've been better to call vasprintf(), but that
+		 * function is missing on some platforms...
+		 */
+		len = vsnprintf(stomp->error_details, STOMP_BUFSIZE, fmt, ap);
+		va_end(ap);
+		if (len < STOMP_BUFSIZE) {
+			stomp->error_details = erealloc(stomp->error_details, len+1);
+		}
 	}
 }
 /* }}} */
 
-/* {{{ stomp_writable 
+/* {{{ stomp_writable
  */
-int stomp_writable(stomp_t *stomp) 
+int stomp_writable(stomp_t *stomp)
 {
 	int     n;
 
@@ -148,7 +163,7 @@ int stomp_writable(stomp_t *stomp)
 }
 /* }}} */
 
-/* {{{ stomp_connect 
+/* {{{ stomp_connect
  */
 int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC)
 {
@@ -172,7 +187,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0 TSRMLS_CC);
 	if (stomp->fd == -1) {
 		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
-		stomp_set_error(stomp, error, errno, NULL);
+		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
 		return 0;
 	}
 	int flag = 1;
@@ -182,14 +197,16 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	memset(&stomp->localaddr, 0, size);
 	if (getsockname(stomp->fd, (struct sockaddr*) &stomp->localaddr, &size) == -1) {
 		snprintf(error, sizeof(error), "getsockname failed: %s (%d)", strerror(errno), errno);
-		stomp_set_error(stomp, error, errno, NULL); 
-		return 0; 
+		stomp_set_error(stomp, error, errno, NULL);
+		return 0;
 	}
 
 	if (stomp_writable(stomp)) {
 #if HAVE_STOMP_SSL
 		if (stomp->options.use_ssl) {
 			SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
+			int ret;
+
 			if (NULL == ctx) {
 				stomp_set_error(stomp, "failed to create the SSL context", 0, NULL);
 				return 0;
@@ -203,20 +220,20 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 				SSL_CTX_free(ctx);
 				return 0;
 			}
-			
+
 			SSL_set_fd(stomp->ssl_handle, stomp->fd);
 
-			if (SSL_connect(stomp->ssl_handle) <= 0) {
-				stomp_set_error(stomp, "SSL/TLS handshake failed", 0, NULL);
+			if ((ret = SSL_connect(stomp->ssl_handle)) <= 0) {
+				stomp_set_error(stomp, "SSL/TLS handshake failed", 0, "SSL error %d", SSL_get_error(stomp->ssl_handle, ret));
 				SSL_shutdown(stomp->ssl_handle);
 				return 0;
 			}
 		}
-#endif        
+#endif
 		return 1;
 	} else {
 		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
-		stomp_set_error(stomp, error, errno, NULL); 
+		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
 		return 0;
 	}
 }
@@ -268,7 +285,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	/* Headers */
 	if (frame->headers) {
 
-		char *key; 
+		char *key;
 		ulong pos;
 		zend_hash_internal_pointer_reset(frame->headers);
 
@@ -303,34 +320,29 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	smart_str_appendl(&buf, "\0", sizeof("\0")-1);
 
 	if (!stomp_writable(stomp)) {
-		char error[1024];
-		snprintf(error, sizeof(error), "Unable to send data");
-		stomp_set_error(stomp, error, errno, NULL);
 		smart_str_free(&buf);
+		stomp_set_error(stomp, "Unable to send data", errno, "%s", strerror(errno));
 		return 0;
 	}
 
 #ifdef HAVE_STOMP_SSL
 	if (stomp->options.use_ssl) {
-		if (-1 == SSL_write(stomp->ssl_handle, buf.c, buf.len)) {
-			char error[1024];
-			snprintf(error, sizeof(error), "Unable to send data");
-			stomp_set_error(stomp, error, errno, NULL);
+		int ret;
+		if (-1 == (ret = SSL_write(stomp->ssl_handle, buf.c, buf.len))) {
 			smart_str_free(&buf);
+			stomp_set_error(stomp, "Unable to send data", errno, "SSL error %d", SSL_get_error(stomp->ssl_handle, ret));
 			return 0;
 		}
 	} else {
-#endif        
+#endif
 		if (-1 == send(stomp->fd, buf.c, buf.len, 0)) {
-			char error[1024];
-			snprintf(error, sizeof(error), "Unable to send data");
-			stomp_set_error(stomp, error, errno, NULL);
 			smart_str_free(&buf);
+			stomp_set_error(stomp, "Unable to send data", errno, "%s", strerror(errno));
 			return 0;
 		}
 #ifdef HAVE_STOMP_SSL
 	}
-#endif        
+#endif
 
 	smart_str_free(&buf);
 
@@ -357,14 +369,25 @@ static int _stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 #endif
 
 	if (len == 0) {
-		TSRMLS_FETCH();
-		zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, "Unexpected EOF while reading from socket");
+#if HAVE_STOMP_SSL
+		if (stomp->options.use_ssl) {
+			stomp_set_error(stomp, "Error reading from socket", errno, "%s. (SSL in use)", strerror(errno));
+		} else {
+#endif
+		stomp_set_error(stomp, "Error reading from socket", errno, "%s. (SSL not in use)", strerror(errno));
+#if HAVE_STOMP_SSL
+		}
+#endif
+		stomp->status = -1;
+	} else if (len == -1) {
+		stomp_set_error(stomp, "Sender closed connection unexpectedly", 0, NULL);
 		stomp->status = -1;
 	}
+
 	return len;
 }
 
-int stomp_recv(stomp_t *stomp, char *msg, const size_t length) 
+int stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 {
 	if (stomp->read_buffer.size == 0) {
 		if (length >= STOMP_BUFSIZE) {
@@ -399,9 +422,9 @@ int stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 }
 /* }}} */
 
-/* {{{ _stomp_read_until 
+/* {{{ _stomp_read_until
  */
-static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimiter) 
+static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimiter)
 {
 	size_t length = 0;
 	size_t bufsize = STOMP_BUFSIZE;
@@ -458,7 +481,7 @@ static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimite
 }
 /* }}} */
 
-/* {{{ stomp_read_buffer 
+/* {{{ stomp_read_buffer
  */
 static size_t stomp_read_buffer(stomp_t *stomp, char **data)
 {
@@ -521,7 +544,7 @@ void stomp_free_frame(stomp_frame_t *frame)
 }
 /* }}} */
 
-/* {{{ stomp_read_frame 
+/* {{{ stomp_read_frame
  */
 stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 {
@@ -556,20 +579,20 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
 	while (1) {
 		char *p = NULL;
 		length = stomp_read_line(stomp, &p);
-		
+
 		if (length < 0) {
 			RETURN_READ_FRAME_FAIL;
 		}
 
 		if (0 == length) {
 			break;
-		} else {  
+		} else {
 			char *p2 = NULL;
 			char *key;
 			char *value;
 
 			p2 = strstr(p,":");
-			
+
 			if (p2 == NULL) {
 				efree(p);
 				RETURN_READ_FRAME_FAIL;
@@ -638,8 +661,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 							&& !strcmp(receipt, receipt_id)) {
 						success = 1;
 					} else {
-						snprintf(error, sizeof(error), "Unexpected receipt id : %s", receipt_id);
-						stomp_set_error(stomp, error, 0, NULL);
+						stomp_set_error(stomp, error, 0, "%s", receipt_id);
 					}
 					stomp_free_frame(res);
 					stomp->frame_stack = stack;
@@ -647,7 +669,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 				} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 					char *error_msg = NULL;
 					if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-						stomp_set_error(stomp, error_msg, 0, res->body);
+						stomp_set_error(stomp, error_msg, 0, "%s", res->body);
 					}
 					stomp_free_frame(res);
 					stomp->frame_stack = stack;
@@ -681,10 +703,10 @@ int stomp_select_ex(stomp_t *stomp, const long int sec, const long int usec)
 	n = php_pollfd_for(stomp->fd, PHP_POLLREADABLE, &tv);
 	if (n < 1) {
 #if !defined(PHP_WIN32) && !(defined(NETWARE) && defined(USE_WINSOCK))
-		if (n == 0) { 
+		if (n == 0) {
 			errno = ETIMEDOUT;
-		}   
-#endif          
+		}
+#endif
 		return 0;
 	}
 	return 1;
