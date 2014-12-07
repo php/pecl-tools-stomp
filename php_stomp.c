@@ -538,11 +538,22 @@ PHP_FUNCTION(stomp_connect)
 
 		stomp_send(stomp, &frame TSRMLS_CC);
 		CLEAR_FRAME(frame);
- 
+
 		/* Retreive Response */
 		res = stomp_read_frame(stomp);
 		if (NULL == res) {
 			STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
+		} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
+			char *error_msg = NULL;
+			if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
+				zval *excobj = zend_throw_exception_ex(stomp_ce_exception, 0 TSRMLS_CC, error_msg);
+				if (res->body) {
+					zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, (char *) res->body TSRMLS_CC);
+				}
+
+				stomp_free_frame(res);
+				RETURN_FALSE;
+			}
 		} else if (0 != strncmp("CONNECTED", res->command, sizeof("CONNECTED")-1)) {
 			if (stomp->error) {
 				STOMP_ERROR_DETAILS(stomp->errnum, stomp->error, stomp->error_details);
