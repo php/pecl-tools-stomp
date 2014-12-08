@@ -368,7 +368,7 @@ static int _stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 	}
 #endif
 
-	if (len == 0) {
+	if (len == -1) {
 #if HAVE_STOMP_SSL
 		if (stomp->options.use_ssl) {
 			stomp_set_error(stomp, "Error reading from socket", errno, "%s. (SSL in use)", strerror(errno));
@@ -379,7 +379,7 @@ static int _stomp_recv(stomp_t *stomp, char *msg, const size_t length)
 		}
 #endif
 		stomp->status = -1;
-	} else if (len == -1) {
+	} else if (len == 0) {
 		stomp_set_error(stomp, "Sender closed connection unexpectedly", 0, NULL);
 		stomp->status = -1;
 	}
