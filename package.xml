@@ -4,7 +4,7 @@
     <channel>pecl.php.net</channel>
     <summary>Stomp client extension</summary>
     <description>
-This extension allows php applications to communicate with any Stomp compliant Message Brokers through easy object oriented and procedural interfaces. 
+This extension allows php applications to communicate with any Stomp compliant Message Brokers through easy object oriented and procedural interfaces.
     </description>
     <lead>
         <name>Pierrick Charron</name>
@@ -12,8 +12,8 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>XXXX-XX-XX</date>
-    <version><release>1.0.X</release><api>1.0.X</api></version>
+    <date>2014-12-07</date>
+    <version><release>1.0.6</release><api>1.0.6</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
@@ -80,7 +80,7 @@ This extension allows php applications to communicate with any Stomp compliant M
     <providesextension>stomp</providesextension>
 
     <extsrcrelease>
-        <configureoption default="/usr" name="with-openssl-dir" prompt="OpenSSL install prefix (no to disable SSL support)" /> 
+        <configureoption default="/usr" name="with-openssl-dir" prompt="OpenSSL install prefix (no to disable SSL support)" />
     </extsrcrelease>
 
     <changelog>
@@ -121,7 +121,7 @@ This extension allows php applications to communicate with any Stomp compliant M
 			<license uri="http://www.php.net/license">PHP License</license>
 			<date>2010-08-13</date>
 			<notes>
-- Fixed SSL connection bug introduced in 1.0.1	
+- Fixed SSL connection bug introduced in 1.0.1
 			</notes>
 		</release>
 		<release>
@@ -147,7 +147,7 @@ This extension allows php applications to communicate with any Stomp compliant M
 - Bump to stable
 			</notes>
 		</release>
-        <release>    
+        <release>
             <version><release>0.4.1</release><api>0.4.1</api></version>
             <stability><release>beta</release><api>beta</api></stability>
             <license uri="http://www.php.net/license">PHP License</license>
@@ -171,10 +171,10 @@ This extension allows php applications to communicate with any Stomp compliant M
             <license uri="http://www.php.net/license">PHP License</license>
             <date>2009-11-22</date>
             <notes>
-- Adds alt class     
+- Adds alt class
 - Fixed bug #16936 (Module segfaults on readFrame if Frame > STOMP_BUFSIZE)
 - Fixed bug #16933 (readFrame does not notice when server shuts down)
-- Fixed bug #16930 (readFrame reports error-frames as "timeout")    
+- Fixed bug #16930 (readFrame reports error-frames as "timeout")
             </notes>
         </release>
         <release>
@@ -196,8 +196,8 @@ This extension allows php applications to communicate with any Stomp compliant M
 - new stomp_connect_error() function (pierrick)
 - stomp_begin, stomp_abort and stomp_commit now accept additional headers (pierrick)
 - new connection timeout and read timeout ini configuration (pierrick)
-- Fix a memory leak in stomp_read_line (pierrick)    
-- Better set of test (Pierrick and Anis)    
+- Fix a memory leak in stomp_read_line (pierrick)
+- Better set of test (Pierrick and Anis)
             </notes>
         </release>
         <release>
@@ -207,7 +207,7 @@ This extension allows php applications to communicate with any Stomp compliant M
             <date>2009-11-01</date>
             <notes>
 - Windows build fix (kalle)
-- Add SSL support (pierrick)    
+- Add SSL support (pierrick)
             </notes>
         </release>
         <release>
@@ -216,7 +216,7 @@ This extension allows php applications to communicate with any Stomp compliant M
             <license uri="http://www.php.net/license">PHP License</license>
             <date>2009-10-30</date>
             <notes>
-- Initial PECL release. (pierrick)            
+- Initial PECL release. (pierrick)
             </notes>
         </release>
     </changelog>
