@@ -12,19 +12,11 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2014-12-07</date>
-    <version><release>1.0.6</release><api>1.0.6</api></version>
+    <date>XXXX-XX-XX</date>
+    <version><release>1.0.X</release><api>1.0.X</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- Add two new ini options stomp.default_username and stomp.default_passowrd (Pierrick)
-- General performance improvements (Pierrick)
-- Fix stomp_read_frame when buffered (Pierrick)
-- Fixed bug #59217 (Connections to RabbitMQ via CLI). (Pierrick).
-- Fixed bug #59970 (acking a message makes rabbitmq disconnect the server). (Pierrick)
-- Fixed bug #67170 (Disable Nagle's Algorithm with TCP_NODELAY, it delays sending small messages). (Yarek Tyshchenko)
-- Fixed bug #68497 (Stomp client doesn't parse ERROR response on CONNECT). (Lorenzo Fontana)
-- Fixed bug #64671 (Add stomp_nack and Stomp::nack functions). (Pierrick)
     </notes>
     <contents>
         <dir name="/">
@@ -84,6 +76,22 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>1.0.6</release><api>1.0.6</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2014-12-07</date>
+            <notes>
+- Add two new ini options stomp.default_username and stomp.default_passowrd (Pierrick)
+- General performance improvements (Pierrick)
+- Fix stomp_read_frame when buffered (Pierrick)
+- Fixed bug #59217 (Connections to RabbitMQ via CLI). (Pierrick).
+- Fixed bug #59970 (acking a message makes rabbitmq disconnect the server). (Pierrick)
+- Fixed bug #67170 (Disable Nagle's Algorithm with TCP_NODELAY, it delays sending small messages). (Yarek Tyshchenko)
+- Fixed bug #68497 (Stomp client doesn't parse ERROR response on CONNECT). (Lorenzo Fontana)
+- Fixed bug #64671 (Add stomp_nack and Stomp::nack functions). (Pierrick)
+            </notes>
+        </release>
         <release>
             <version><release>1.0.5</release><api>1.0.5</api></version>
             <stability><release>stable</release><api>stable</api></stability>
