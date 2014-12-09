@@ -84,13 +84,14 @@ stomp_t *stomp_init();
 int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC);
 void stomp_close(stomp_t *stomp);
 int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
-stomp_frame_t *stomp_read_frame(stomp_t *connection);
+stomp_frame_t *stomp_read_frame_ex(stomp_t *connection, int use_stack);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);
 int stomp_select_ex(stomp_t *connection, const long int sec, const long int usec);
 void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *fmt, ...) ZEND_ATTRIBUTE_PTR_FORMAT(printf, 4, 0);
 void stomp_free_frame(stomp_frame_t *frame);
 
 #define stomp_select(s) stomp_select_ex(s, s->options.read_timeout_sec, s->options.read_timeout_sec)
+#define stomp_read_frame(c) stomp_read_frame_ex(c, 1)
 #endif /* _STOMP_H_ */
 
 /*

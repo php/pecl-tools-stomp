@@ -33,6 +33,36 @@
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
 extern zend_class_entry *stomp_ce_exception;
 
+/* {{{ DEBUG */
+#if PHP_DEBUG
+static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
+	php_printf("------ START FRAME ------\n");
+	php_printf("%s\n", frame->command);
+	/* Headers */
+	if (frame->headers) {
+		char *key;
+		ulong pos;
+		zend_hash_internal_pointer_reset(frame->headers);
+
+		while (zend_hash_get_current_key(frame->headers, &key, &pos, 0) == HASH_KEY_IS_STRING) {
+			char *value = NULL;
+
+			php_printf("%s:", key);
+
+			if (zend_hash_get_current_data(frame->headers, (void **)&value) == SUCCESS) {
+				php_printf("%s", value);
+			}
+
+			php_printf("\n");
+			zend_hash_move_forward(frame->headers);
+		}
+	}
+	php_printf("\n%s\n", frame->body);
+	php_printf("------ END FRAME ------\n");
+}
+#endif
+/* }}} */
+
 /* {{{ stomp_init
  */
 stomp_t *stomp_init()
@@ -170,6 +200,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	char error[1024];
 	socklen_t        size;
 	struct timeval tv;
+	int flag = 1;
 
 	if (stomp->host != NULL)
 	{
@@ -190,7 +221,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
 		return 0;
 	}
-	int flag = 1;
+
 	setsockopt(stomp->fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
 	size = sizeof(stomp->localaddr);
@@ -546,13 +577,13 @@ void stomp_free_frame(stomp_frame_t *frame)
 
 /* {{{ stomp_read_frame
  */
-stomp_frame_t *stomp_read_frame(stomp_t *stomp)
+stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 {
 	stomp_frame_t *f = NULL;
 	char *cmd = NULL, *length_str = NULL;
 	int length = 0;
 
-	if (stomp->frame_stack) {
+	if (use_stack && stomp->frame_stack) {
 		return stomp_frame_stack_shift(&stomp->frame_stack);
 	}
 
@@ -648,10 +679,9 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 	char *receipt = NULL;
 
 	if (zend_hash_find(frame->headers, "receipt", sizeof("receipt"), (void **)&receipt) == SUCCESS) {
-		stomp_frame_stack_t *stack = NULL;
 		success = 0;
 		while (1) {
-			stomp_frame_t *res = stomp_read_frame(stomp);
+			stomp_frame_t *res = stomp_read_frame_ex(stomp, 0);
 			if (res) {
 				if (0 == strncmp("RECEIPT", res->command, sizeof("RECEIPT") - 1)) {
 					char *receipt_id = NULL;
@@ -663,7 +693,6 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 						stomp_set_error(stomp, "Invalid receipt", 0, "%s", receipt_id);
 					}
 					stomp_free_frame(res);
-					stomp->frame_stack = stack;
 					return success;
 				} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 					char *error_msg = NULL;
@@ -671,13 +700,11 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 						stomp_set_error(stomp, error_msg, 0, "%s", res->body);
 					}
 					stomp_free_frame(res);
-					stomp->frame_stack = stack;
 					return success;
 				} else {
-					stomp_frame_stack_push(&stack, res);
+					stomp_frame_stack_push(&stomp->frame_stack, res);
 				}
 			} else {
-				stomp->frame_stack = stack;
 				return success;
 			}
 		}
