@@ -645,7 +645,6 @@ stomp_frame_t *stomp_read_frame(stomp_t *stomp)
  */
 int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 	int success = 1;
-	char error[1024];
 	char *receipt = NULL;
 
 	if (zend_hash_find(frame->headers, "receipt", sizeof("receipt"), (void **)&receipt) == SUCCESS) {
@@ -661,7 +660,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 							&& !strcmp(receipt, receipt_id)) {
 						success = 1;
 					} else {
-						stomp_set_error(stomp, error, 0, "%s", receipt_id);
+						stomp_set_error(stomp, "Invalid receipt", 0, "%s", receipt_id);
 					}
 					stomp_free_frame(res);
 					stomp->frame_stack = stack;
