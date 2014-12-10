@@ -527,7 +527,6 @@ PHP_FUNCTION(stomp_connect)
 	stomp->options.connect_timeout_usec = STOMP_G(connection_timeout_usec);
 
 	stomp->status = stomp_connect(stomp, url_parts->host, url_parts->port ? url_parts->port : 61613 TSRMLS_CC);
-	php_url_free(url_parts);
 
 	if (stomp->status) {
 		stomp_frame_t *res;
@@ -542,12 +541,19 @@ PHP_FUNCTION(stomp_connect)
 			password = STOMP_G(default_password);
 			password_len = strlen(password);
 		}
-		zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
-		zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
- 
+		if (username_len) {
+			zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len+1, NULL);
+		}
+		if (password_len) {
+			zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len+1, NULL);
+		}
+
 		if (NULL != headers) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 		}
+
+		zend_hash_add(frame.headers, "accept-version", sizeof("accept-version"), "1.0,1.1", sizeof("1.0,1.1"), NULL);
+		zend_hash_add(frame.headers, "host", sizeof("host"), url_parts->host, strlen(url_parts->host)+1, NULL);
 
 		stomp_send(stomp, &frame TSRMLS_CC);
 		CLEAR_FRAME(frame);
@@ -581,6 +587,11 @@ PHP_FUNCTION(stomp_connect)
 				}
 				stomp->session = estrdup(key);
 			}
+			if (zend_hash_find(res->headers, "version", sizeof("version"), (void **)&key) == SUCCESS) {
+				if (!strncmp(key, "1.1", sizeof("1.1"))) {
+					stomp->version = STOMP_1_1;
+				}
+			}
 
 			stomp_free_frame(res);
 
@@ -593,6 +604,7 @@ PHP_FUNCTION(stomp_connect)
 					stomp_close(i_obj->stomp);
 				}
 				i_obj->stomp = stomp;
+				php_url_free(url_parts);
 				RETURN_TRUE;
 			}
 		} 
@@ -601,6 +613,7 @@ PHP_FUNCTION(stomp_connect)
 	}
 
 	stomp_close(stomp);
+	php_url_free(url_parts);
 	RETURN_FALSE;
 }
 /* }}} */
@@ -760,6 +773,7 @@ PHP_FUNCTION(stomp_subscribe)
 	zval *headers = NULL;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
+	char *id = NULL;
 
 	if (stomp_object) {
 		stomp_object_t *i_obj = NULL;
@@ -791,14 +805,26 @@ PHP_FUNCTION(stomp_subscribe)
 	/* Add the destination */
 	zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
-	zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
+	zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL);
+
+	if (stomp->version >= STOMP_1_1) {
+		zend_hash_add(frame.headers, "id", sizeof("id"), "0", sizeof("0"), NULL);
+	}
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
 	}
 
+	if (zend_hash_find(frame.headers, "id", sizeof("id"), (void **)&id) == SUCCESS) {
+		id = estrdup(id);
+	}
 	CLEAR_FRAME(frame);
-	RETURN_BOOL(success);
+
+	if (id) {
+		RETURN_STRING(id, 0);
+	} else {
+		RETURN_BOOL(success);
+	}
 }
 /* }}} */
 

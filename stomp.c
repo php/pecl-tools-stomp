@@ -79,6 +79,7 @@ stomp_t *stomp_init()
 	stomp->error_details = NULL;
 	stomp->errnum = 0;
 	stomp->session = NULL;
+	stomp->version = STOMP_1_0;
 	stomp->options.connect_timeout_sec = 2;
 	stomp->options.connect_timeout_usec = 0;
 	stomp->options.read_timeout_sec = 2;
@@ -377,6 +378,9 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 
 	smart_str_free(&buf);
 
+#if PHP_DEBUG
+	print_stomp_frame(frame TSRMLS_CC);
+#endif
 	return 1;
 }
 /* }}} */
@@ -667,6 +671,11 @@ stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 	} else {
 		f->body_length = stomp_read_buffer(stomp, &f->body);
 	}
+
+#if PHP_DEBUG
+	TSRMLS_FETCH();
+	print_stomp_frame(f TSRMLS_CC);
+#endif 
 
 	return f;
 }

@@ -35,6 +35,11 @@
 	ALLOC_HASHTABLE(f->headers); \
 	zend_hash_init(f->headers, 0, NULL, NULL, 0);
 
+typedef enum {
+	STOMP_1_0 = 0x0100,
+	STOMP_1_1 = 0x0101,
+} stomp_version;
+
 typedef struct _stomp_options {
 	long connect_timeout_sec;
 	long connect_timeout_usec;
@@ -68,6 +73,7 @@ typedef struct _stomp {
 	char *error;
 	int errnum;
 	char *error_details;
+	stomp_version version;
 	char *session;
 #if HAVE_STOMP_SSL
 	SSL *ssl_handle;
