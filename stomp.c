@@ -26,8 +26,9 @@
 #include "ext/standard/php_smart_str.h"
 #include "stomp.h"
 #include "php_stomp.h"
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/tcp.h>
-
+#endif
 #define RETURN_READ_FRAME_FAIL { stomp_free_frame(f); return NULL; }
 
 ZEND_EXTERN_MODULE_GLOBALS(stomp);
@@ -222,7 +223,9 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 		return 0;
 	}
 
+#ifdef HAVE_NETINET_IN_H
 	setsockopt(stomp->fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+#endif
 
 	size = sizeof(stomp->localaddr);
 	memset(&stomp->localaddr, 0, size);
