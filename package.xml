@@ -12,12 +12,20 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>pierrick@php.net</email>
         <active>yes</active>
     </lead>
-    <date>XXXX-XX-XX</date>
-    <version><release>1.0.X</release><api>1.0.X</api></version>
+    <lead>
+        <name>Gennady Feldman</name>
+        <user>gena01</user>
+        <email>gena01@php.net</email>
+        <active>yes</active>
+    </lead>
+    <date>2015-05-15</date>
+    <version><release>1.0.7</release><api>1.0.7</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
 - add LICENSE file as documentation (Remi)
+- Fixed Windows compilation regression due to new TCP_NODELAY code. (Gennady Feldman)
+- Fixed bug where error checking was missing after stomp_send(). (Gennady Feldman)
     </notes>
     <contents>
         <dir name="/">
@@ -78,6 +86,17 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>1.0.7</release><api>1.0.7</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2015-05-15</date>
+            <notes>
+- add LICENSE file as documentation (Remi)
+- Fixed Windows compilation regression due to new TCP_NODELAY code. (Gennady Feldman)
+- Fixed bug where error checking was missing after stomp_send(). (Gennady Feldman)
+            </notes>
+        </release>
         <release>
             <version><release>1.0.6</release><api>1.0.6</api></version>
             <stability><release>stable</release><api>stable</api></stability>
