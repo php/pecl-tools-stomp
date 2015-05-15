@@ -18,14 +18,11 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>gena01@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2015-05-15</date>
-    <version><release>1.0.7</release><api>1.0.7</api></version>
+    <date>XXXX-XX-XX</date>
+    <version><release>1.0.X</release><api>1.0.X</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
-- add LICENSE file as documentation (Remi)
-- Fixed Windows compilation regression due to new TCP_NODELAY code. (Gennady Feldman)
-- Fixed bug where error checking was missing after stomp_send(). (Gennady Feldman)
     </notes>
     <contents>
         <dir name="/">
