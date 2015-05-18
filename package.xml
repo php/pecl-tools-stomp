@@ -18,11 +18,13 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>gena01@php.net</email>
         <active>yes</active>
     </lead>
-    <date>XXXX-XX-XX</date>
-    <version><release>1.0.X</release><api>1.0.X</api></version>
+    <date>2015-05-18</date>
+    <version><release>1.0.8</release><api>1.0.8</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
+- Fix perm on source files. (Remi)
+- Fixing PHP_STOMP_VERSION constant, per Remi's request. (Gennady)
     </notes>
     <contents>
         <dir name="/">
@@ -83,6 +85,16 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>1.0.8</release><api>1.0.8</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2015-05-18</date>
+            <notes>
+- Fix perm on source files. (Remi)
+- Fixing PHP_STOMP_VERSION constant, per Remi's request. (Gennady)
+            </notes>
+        </release>
         <release>
             <version><release>1.0.7</release><api>1.0.7</api></version>
             <stability><release>stable</release><api>stable</api></stability>
