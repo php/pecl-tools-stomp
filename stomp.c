@@ -181,7 +181,7 @@ int stomp_writable(stomp_t *stomp)
 	int     n;
 
 	n = php_pollfd_for_ms(stomp->fd, POLLOUT, 1000);
-	if (n < 1) {
+	if (n != POLLOUT) {
 #ifndef PHP_WIN32
 		if (n == 0) {
 			errno = ETIMEDOUT;
