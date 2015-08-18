@@ -747,6 +747,8 @@ PHP_FUNCTION(stomp_send)
 		CLEAR_FRAME(frame);
 		RETURN_FALSE;
 	}
+	if (frame.body_length > 0 && strnlen(frame.body, frame.body_length) >= frame.body_length)
+		frame.body_length = 0;
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
