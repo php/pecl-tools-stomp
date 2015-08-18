@@ -531,6 +531,7 @@ PHP_FUNCTION(stomp_connect)
 
 	if (stomp->status) {
 		stomp_frame_t *res;
+		int rres;
 		stomp_frame_t frame = {0};
  
 		INIT_FRAME(frame, "CONNECT");
@@ -549,9 +550,9 @@ PHP_FUNCTION(stomp_connect)
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 		}
 
-		res = stomp_send(stomp, &frame TSRMLS_CC);
+		rres = stomp_send(stomp, &frame TSRMLS_CC);
 		CLEAR_FRAME(frame);
-		if (0 == res) {
+		if (0 == rres) {
 			zval *excobj = zend_throw_exception_ex(stomp_ce_exception, stomp->errnum TSRMLS_CC, stomp->error);
 			if (stomp->error_details) {
 				zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, stomp->error_details TSRMLS_CC);
@@ -746,6 +747,8 @@ PHP_FUNCTION(stomp_send)
 		CLEAR_FRAME(frame);
 		RETURN_FALSE;
 	}
+	if (frame.body_length > 0 && strnlen(frame.body, frame.body_length) >= frame.body_length)
+		frame.body_length = 0;
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
