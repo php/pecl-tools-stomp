@@ -469,11 +469,11 @@ static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimite
 		char *c;
 		found = 0;
 
-        //If read_buffer.size == 0 && _stomp_recv == 0 
-        //You have to break, or It's endless loop
-        if(stomp->read_buffer.status == -1) {
-            break;
-        }
+		//If read_buffer.size == 0 && _stomp_recv == 0 
+		//You have to break, or It's endless loop
+		if(stomp->read_buffer.status == -1) {
+			break;
+		}
 		// First populate the buffer
 		if (stomp->read_buffer.size == 0) {
 			stomp->read_buffer.size = _stomp_recv(stomp, stomp->read_buffer.buf, STOMP_BUFSIZE);
