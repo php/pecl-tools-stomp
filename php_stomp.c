@@ -808,7 +808,7 @@ PHP_FUNCTION(stomp_subscribe)
 	/* Add the destination */
 	zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
-	zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
+	//zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
