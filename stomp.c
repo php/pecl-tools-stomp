@@ -472,6 +472,12 @@ static size_t _stomp_read_until(stomp_t *stomp, char **data, const char delimite
 		// First populate the buffer
 		if (stomp->read_buffer.size == 0) {
 			stomp->read_buffer.size = _stomp_recv(stomp, stomp->read_buffer.buf, STOMP_BUFSIZE);
+
+			if (stomp->status == -1) {
+				length = 0;
+				break;
+			}
+
 			stomp->read_buffer.pos = stomp->read_buffer.buf;
 		}
 
