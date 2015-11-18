@@ -543,8 +543,17 @@ PHP_FUNCTION(stomp_connect)
 			password = STOMP_G(default_password);
 			password_len = strlen(password);
 		}
-		zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
-		zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
+
+		/*
+		 * Per Stomp 1.1 "login" and "passcode" are optional. (Also this fix makes test pass against RabbitMQ)
+		 */
+        if (username_len > 0) {
+			zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
+        }
+
+		if (password_len > 0) {
+			zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
+		}
  
 		if (NULL != headers) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
