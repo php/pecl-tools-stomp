@@ -2,7 +2,6 @@ dnl $Id$
 dnl config.m4 for extension stomp
 
 PHP_ARG_ENABLE(stomp, whether to enable stomp support,
-Make sure that the comment is aligned:
 [  --enable-stomp           Enable stomp support])
 
 PHP_ARG_WITH(openssl-dir,OpenSSL dir for stomp,
