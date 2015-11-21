@@ -1,0 +1,21 @@
+
+language: php
+
+php:
+  - 5.3
+  - 5.4
+  - 5.5
+  - 5.6
+
+env:
+  - STOMP_PROVIDER=rabbitmq
+
+before_script:
+  - sh -c " if [ '$STOMP_PROVIDER' = 'rabbitmq' ]; then
+              sudo service rabbitmq-server start;
+              sudo rabbitmq-plugins enable rabbitmq_stomp;
+              sudo rabbitmq-plugins list;
+            fi"
+  - phpize
+
+script: ./configure && make && NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test TEST_PHP_ARGS='--show-diff'

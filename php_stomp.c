@@ -805,8 +805,11 @@ PHP_FUNCTION(stomp_subscribe)
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 	}
 
+	/* Add the ack:client (if not overwritten through headers)*/
+	if (!zend_hash_exists(frame.headers, "ack", sizeof("ack"))) {
+		zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
+	}
 	/* Add the destination */
-	zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
 	//zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
 
