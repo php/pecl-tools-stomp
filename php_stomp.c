@@ -29,24 +29,46 @@
 #include "ext/standard/url.h"
 #include "php_stomp.h"
 
-#include "ext/standard/php_smart_str.h"
+#ifdef ZEND_ENGINE_2
+# include "ext/standard/php_smart_str.h"
+
+# define GET_STOMP_OBJECT() ((stomp_object_t *) zend_object_store_get_object(stomp_object TSRMLS_CC))
+# define FETCH_STOMP_RSRC(result, rsrc) do { ZEND_FETCH_RESOURCE(result, stomp_t *, &rsrc, -1, PHP_STOMP_RES_NAME, le_stomp); } while(0)
+#else
+# include "Zend/zend_smart_str.h"
+# define GET_STOMP_OBJECT() ((stomp_object_t *) ((char *) Z_OBJ_P(getThis()) - XtOffsetOf(stomp_object_t, std)))
+# define FETCH_STOMP_RSRC(result, rsrc) do { result = zend_fetch_resource_ex(rsrc, PHP_STOMP_RES_NAME, le_stomp); } while (0)
+#endif
 
 #define FETCH_STOMP_OBJECT \
-	i_obj = (stomp_object_t *) zend_object_store_get_object(stomp_object TSRMLS_CC); \
+	i_obj = GET_STOMP_OBJECT(); \
 	if (!(stomp = i_obj->stomp)) { \
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, PHP_STOMP_ERR_NO_CTR); \
 		RETURN_FALSE; \
 	} 
 
+#ifdef ZEND_ENGINE_2
+#define INIT_FRAME_HEADERS \
+	zend_hash_init(frame.headers, 0, NULL, NULL, 0);
+#else
+static void stomp_free_headers(zval *zv) {
+	efree(Z_PTR_P(zv));
+}
+
+#define INIT_FRAME_HEADERS \
+	zend_hash_init(frame.headers, 0, lalalalala, stomp_free_headers, 0);
+#endif
+
 #define INIT_FRAME_L(frame, cmd, l) \
 	frame.command = cmd; \
 	frame.command_length = l; \
 	ALLOC_HASHTABLE(frame.headers); \
-	zend_hash_init(frame.headers, 0, NULL, NULL, 0);
+	INIT_FRAME_HEADERS
 
 #define INIT_FRAME(frame, cmd) INIT_FRAME_L(frame, cmd, sizeof(cmd)-1)
 
-#define FRAME_HEADER_FROM_HASHTABLE(h, p) \
+#ifdef ZEND_ENGINE_2
+# define FRAME_HEADER_FROM_HASHTABLE(h, p) \
 	HashTable *headers_ht = p; \
 	zval **value = NULL; \
 	char *string_key = NULL; \
@@ -68,10 +90,38 @@
 			efree(string_key); \
 		} \
 	} 
+#else
+# define FRAME_HEADER_FROM_HASHTABLE(h, p) \
+	HashTable *headers_ht = p; \
+	zval *value = NULL; \
+	zend_string *key = NULL; \
+	ZEND_HASH_FOREACH_STR_KEY_VAL(headers_ht, key, value) { \
+		if (key == NULL) { \
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid argument or parameter array"); \
+			break; \
+		} else { \
+			if (Z_TYPE_P(value) != IS_STRING) { \
+				SEPARATE_ZVAL(value); \
+				convert_to_string(value); \
+			} \
+			if (strcmp(ZSTR_VAL(key), "content-length") != 0) { \
+				zend_hash_add_ptr(h, key, estrdup(Z_STRVAL_P(value))); \
+			} \
+		} \
+	} ZEND_HASH_FOREACH_END();
+#endif
 
 #define CLEAR_FRAME(frame) \
 	zend_hash_destroy(frame.headers); \
 	efree(frame.headers);
+
+#ifdef ZEND_ENGINE_2
+#define THROW_STOMP_EXCEPTION(excobj, errnum, error) \
+	excobj = zend_throw_exception_ex(stomp_ce_exception, errnum TSRMLS_CC, error);
+#else
+#define THROW_STOMP_EXCEPTION(excobj, errnum, error) \
+	ZVAL_OBJ(excobj, zend_throw_exception_ex(stomp_ce_exception, errnum TSRMLS_CC, error));
+#endif
 
 #define STOMP_ERROR(errno, msg) \
 	STOMP_G(error_no) = errno; \
@@ -90,7 +140,8 @@
 	} \
     STOMP_G(error_msg) = estrdup(msg); \
     if (stomp_object) { \
-        zval *object = zend_throw_exception_ex(stomp_ce_exception, errno TSRMLS_CC, msg); \
+	zval _object, *object = &_object; \
+	THROW_STOMP_EXCEPTION(object, errno, msg) \
         if (details) { \
             zend_update_property_string(stomp_ce_exception, object, "details", sizeof("details")-1, (char *) details TSRMLS_CC); \
         } \
@@ -331,7 +382,11 @@ static void stomp_send_disconnect(stomp_t *stomp TSRMLS_DC)
 	CLEAR_FRAME(frame);
 }
 
+#ifdef ZEND_ENGINE_2
 static void php_destroy_stomp_res(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+#else
+static void php_destroy_stomp_res(zend_resource *rsrc TSRMLS_DC)
+#endif
 {
 	stomp_t *stomp = (stomp_t *) rsrc->ptr;
 	stomp_send_disconnect(stomp TSRMLS_CC);
@@ -352,11 +407,16 @@ static void stomp_object_free_storage(stomp_object_t *intern TSRMLS_DC)
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4) || (PHP_MAJOR_VERSION > 5)
 #define PHP_STOMP_RUNTIME_CACHE 
 #endif 
+#ifdef ZEND_ENGINE_2
 static zend_object_value php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 {
 	zend_object_value retval;
+#else
+static zend_object *php_stomp_new(zend_class_entry *ce TSRMLS_DC)
+{
+#endif
 	stomp_object_t *intern;
-#ifndef PHP_STOMP_RUNTIME_CACHE	
+#if !defined(PHP_STOMP_RUNTIME_CACHE) && defined(ZEND_ENGINE_2)
 	zval *tmp;
 #endif	
 
@@ -366,14 +426,20 @@ static zend_object_value php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 	zend_object_std_init(&intern->std, ce TSRMLS_CC);
 #ifdef PHP_STOMP_RUNTIME_CACHE
 	object_properties_init(&intern->std, ce);
-#else
+#elif defined(ZEND_ENGINE_2)
 	zend_hash_copy(intern->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+#else
+	zend_hash_copy(intern->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref);
 #endif
 
+#ifdef ZEND_ENGINE_2
 	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t) stomp_object_free_storage, NULL TSRMLS_CC);
 	retval.handlers = zend_get_std_object_handlers();
 
 	return retval;
+#else
+	return (zend_object *) intern;
+#endif
 }
 /* }}} */
 
@@ -401,7 +467,11 @@ PHP_MINIT_FUNCTION(stomp)
 
 	/* Register StompException class */
 	INIT_CLASS_ENTRY(ce, PHP_STOMP_EXCEPTION_CLASSNAME, stomp_exception_methods);
+#ifdef ZEND_ENGINE_2
 	stomp_ce_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+#else
+	stomp_ce_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default());
+#endif
 
 	/* Properties */
 	zend_declare_property_null(stomp_ce_exception, "details", sizeof("details")-1, ZEND_ACC_PRIVATE TSRMLS_CC);
@@ -463,7 +533,11 @@ PHP_MINFO_FUNCTION(stomp)
    Get stomp extension version */
 PHP_FUNCTION(stomp_version) 
 {
+#ifdef ZEND_ENGINE_2
 	RETURN_STRINGL(PHP_STOMP_VERSION, sizeof(PHP_STOMP_VERSION)-1, 1);
+#else
+	RETURN_STRINGL(PHP_STOMP_VERSION, sizeof(PHP_STOMP_VERSION)-1);
+#endif
 }
 /* }}} */
 
@@ -548,11 +622,19 @@ PHP_FUNCTION(stomp_connect)
 		 * Per Stomp 1.1 "login" and "passcode" are optional. (Also this fix makes test pass against RabbitMQ)
 		 */
         if (username_len > 0) {
+#ifdef ZEND_ENGINE_2
 			zend_hash_add(frame.headers, "login", sizeof("login"), username, username_len + 1, NULL);
+#else
+			zend_hash_str_add_ptr(frame.headers, ZEND_STRL("login"), estrdup(username));
+#endif
         }
 
 		if (password_len > 0) {
+#ifdef ZEND_ENGINE_2
 			zend_hash_add(frame.headers, "passcode", sizeof("passcode"), password, password_len + 1, NULL);
+#else
+			zend_hash_str_add_ptr(frame.headers, ZEND_STRL("passcode"), estrdup(password));
+#endif
 		}
  
 		if (NULL != headers) {
@@ -562,7 +644,8 @@ PHP_FUNCTION(stomp_connect)
 		send_status = stomp_send(stomp, &frame TSRMLS_CC);
 		CLEAR_FRAME(frame);
 		if (0 == send_status) {
-			zval *excobj = zend_throw_exception_ex(stomp_ce_exception, stomp->errnum TSRMLS_CC, stomp->error);
+			zval _excobj, *excobj = &_excobj;
+			THROW_STOMP_EXCEPTION(excobj, stomp->errnum, stomp->error);
 			if (stomp->error_details) {
 				zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, stomp->error_details TSRMLS_CC);
 			}
@@ -575,8 +658,13 @@ PHP_FUNCTION(stomp_connect)
 			STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
 		} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 			char *error_msg = NULL;
+			zval _excobj, *excobj = &_excobj;
+#ifdef ZEND_ENGINE_2
 			if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-				zval *excobj = zend_throw_exception_ex(stomp_ce_exception, 0 TSRMLS_CC, error_msg);
+#else
+			if ((error_msg = zend_hash_str_find_ptr(res->headers, ZEND_STRL("message"))) != NULL) {
+#endif
+				THROW_STOMP_EXCEPTION(excobj, 0, error_msg);
 				if (res->body) {
 					zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, (char *) res->body TSRMLS_CC);
 				}
@@ -592,7 +680,11 @@ PHP_FUNCTION(stomp_connect)
 		} else {
 			char *key = NULL;
 
+#ifdef ZEND_ENGINE_2
 			if (zend_hash_find(res->headers, "session", sizeof("session"), (void **)&key) == SUCCESS) {
+#else
+			if ((key = zend_hash_str_find_ptr(res->headers, ZEND_STRL("session"))) != NULL) {
+#endif
 				if (stomp->session) {
 					efree(stomp->session);
 				}
@@ -602,10 +694,14 @@ PHP_FUNCTION(stomp_connect)
 			stomp_free_frame(res);
 
 			if (!stomp_object) {
+#ifdef ZEND_ENGINE_2
 				ZEND_REGISTER_RESOURCE(return_value, stomp, le_stomp);
 				return; 
+#else
+				RETURN_RES(zend_register_resource(stomp, le_stomp));
+#endif
 			} else {
-				stomp_object_t *i_obj = (stomp_object_t *) zend_object_store_get_object(stomp_object TSRMLS_CC);
+				stomp_object_t *i_obj = GET_STOMP_OBJECT();
 				if (i_obj->stomp) {
 					stomp_close(i_obj->stomp);
 				}
@@ -627,7 +723,11 @@ PHP_FUNCTION(stomp_connect)
 PHP_FUNCTION(stomp_connect_error) 
 {
 	if (STOMP_G(error_msg)) {
+#ifdef ZEND_ENGINE_2
 		RETURN_STRING(STOMP_G(error_msg),1);
+#else
+		RETURN_STRING(STOMP_G(error_msg));
+#endif
 	} else {
 		RETURN_NULL();
 	}
@@ -648,7 +748,7 @@ PHP_FUNCTION(stomp_get_session_id)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	if (!stomp) {
@@ -657,7 +757,11 @@ PHP_FUNCTION(stomp_get_session_id)
 	}
 
 	if (stomp->session) {
+#ifdef ZEND_ENGINE_2
 		RETURN_STRING(stomp->session, 1);
+#else
+		RETURN_STRING(stomp->session);
+#endif
 	} else {
 		RETURN_FALSE;
 	}
@@ -682,8 +786,12 @@ PHP_FUNCTION(stomp_close)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
+#ifdef ZEND_ENGINE_2
 		zend_list_delete(Z_RESVAL_P(arg));
+#else
+		zend_list_delete(Z_RES_P(arg));
+#endif
 	}
 
 	RETURN_TRUE;
@@ -713,7 +821,7 @@ PHP_FUNCTION(stomp_send)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsz|a!", &arg, &destination, &destination_length, &msg, &headers) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	/* Verify destination */
@@ -730,24 +838,40 @@ PHP_FUNCTION(stomp_send)
 	}
 
 	/* Add the destination */
+#ifdef ZEND_ENGINE_2
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
+#else
+	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("destination"), estrdup(destination));
+#endif
 	 
 	if (Z_TYPE_P(msg) == IS_STRING) {
 		frame.body = Z_STRVAL_P(msg);
 		frame.body_length = Z_STRLEN_P(msg);
 	} else if (Z_TYPE_P(msg) == IS_OBJECT && instanceof_function(Z_OBJCE_P(msg), stomp_ce_frame TSRMLS_CC)) {
-		zval *frame_obj_prop = NULL;
+		zval *frame_obj_prop = NULL, rv;
+#ifdef ZEND_ENGINE_2
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "command", sizeof("command")-1, 1 TSRMLS_CC);
+#else
+		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "command", sizeof("command")-1, 1, &rv);
+#endif
 		if (Z_TYPE_P(frame_obj_prop) == IS_STRING) {
 			frame.command = Z_STRVAL_P(frame_obj_prop);
 			frame.command_length = Z_STRLEN_P(frame_obj_prop);
 		}
+#ifdef ZEND_ENGINE_2
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "body", sizeof("body")-1, 1 TSRMLS_CC);
+#else
+		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "body", sizeof("body")-1, 1, &rv);
+#endif
 		if (Z_TYPE_P(frame_obj_prop) == IS_STRING) {
 			frame.body = Z_STRVAL_P(frame_obj_prop);
 			frame.body_length = Z_STRLEN_P(frame_obj_prop);
 		}
+#ifdef ZEND_ENGINE_2
 		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1 TSRMLS_CC);
+#else
+		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1, &rv);
+#endif
 		if (Z_TYPE_P(frame_obj_prop) == IS_ARRAY) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
 		}
@@ -789,7 +913,7 @@ PHP_FUNCTION(stomp_subscribe)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &headers) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	/* Verify destination */
@@ -806,9 +930,15 @@ PHP_FUNCTION(stomp_subscribe)
 	}
 
 	/* Add the destination */
+#ifdef ZEND_ENGINE_2
 	zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
 	//zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
+#else
+	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("ack"), estrdup("client"));
+	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("destination"), estrdup(destination));
+	//zend_hash_str_add_ptr(frame.headers, ZEND_STRL("activemq.prefetchSize"), estrdup("1"));
+#endif
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
@@ -842,7 +972,7 @@ PHP_FUNCTION(stomp_unsubscribe)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a!", &arg, &destination, &destination_length, &headers) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	/* Verify destination */
@@ -859,7 +989,11 @@ PHP_FUNCTION(stomp_unsubscribe)
 	}
 
 	/* Add the destination */
+#ifdef ZEND_ENGINE_2
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
+#else
+	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("destination"), estrdup(destination));
+#endif
 
 	if (stomp_send(stomp, &frame TSRMLS_CC) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
@@ -884,7 +1018,7 @@ PHP_FUNCTION(stomp_has_frame)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp);
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	RETURN_BOOL(stomp_select(stomp) > 0);
@@ -913,11 +1047,17 @@ PHP_FUNCTION(stomp_read_frame)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|s", &arg, &class_name, &class_name_len) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp);
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	if (class_name_len > 0) { 
+#ifdef ZEND_ENGINE_2
 		ce = zend_fetch_class(class_name, class_name_len, ZEND_FETCH_CLASS_AUTO TSRMLS_CC);
+#else
+		zend_string *name = zend_string_init(class_name, class_name_len, 0);
+		ce = zend_fetch_class(name, ZEND_FETCH_CLASS_AUTO);
+		zend_string_release(name);
+#endif
 		if (!ce) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not find class '%s'", class_name);
 			ce = stomp_ce_frame;
@@ -928,12 +1068,17 @@ PHP_FUNCTION(stomp_read_frame)
 
 
 	if ((res = stomp_read_frame(stomp))) {
-		zval *headers = NULL;
+		zval _headers, *headers = &_headers;
 
 		if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 			char *error_msg = NULL;
+#ifdef ZEND_ENGINE_2
 			if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
-				zval *excobj = zend_throw_exception_ex(stomp_ce_exception, 0 TSRMLS_CC, error_msg);
+#else
+			if ((error_msg = zend_hash_str_find_ptr(res->headers, ZEND_STRL("message"))) != NULL) {
+#endif
+				zval _excobj, *excobj = &_excobj;
+				THROW_STOMP_EXCEPTION(excobj, 0, error_msg);
 				if (res->body) {
 					zend_update_property_string(stomp_ce_exception, excobj, "details", sizeof("details")-1, (char *) res->body TSRMLS_CC);
 				}
@@ -942,10 +1087,13 @@ PHP_FUNCTION(stomp_read_frame)
 				RETURN_FALSE;
 			}
 		}
-	
+
+#ifdef ZEND_ENGINE_2
 		MAKE_STD_ZVAL(headers);
+#endif
 		array_init(headers);
 		if (res->headers) {
+#ifdef ZEND_ENGINE_2
 			char *key;
 			ulong pos;
 			zend_hash_internal_pointer_reset(res->headers);
@@ -957,16 +1105,27 @@ PHP_FUNCTION(stomp_read_frame)
 				}
 				zend_hash_move_forward(res->headers);
 			}
+#else
+			zend_string *key;
+			char *value;
+			ZEND_HASH_FOREACH_STR_KEY_PTR(res->headers, key, value) {
+				if (!key) {
+					break;
+				}
+				add_assoc_string_ex(headers, ZSTR_VAL(key), ZSTR_LEN(key), value);
+			} ZEND_HASH_FOREACH_END();
+#endif
 		}
 		
 		if (ce) {
 			zend_fcall_info fci;
 			zend_fcall_info_cache fcc;
-			zval *retval_ptr;
+			zval _retval_ptr, *retval_ptr = &_retval_ptr;
 
 			object_init_ex(return_value, ce);
 
 			if (ce->constructor) {
+#ifdef ZEND_ENGINE_2
 				zval *cmd = NULL, *body = NULL;
 				ALLOC_ZVAL(cmd);
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)								
@@ -976,7 +1135,6 @@ PHP_FUNCTION(stomp_read_frame)
 				cmd->refcount = 1;
 				cmd->is_ref = 0;
 #endif
-				ZVAL_STRINGL(cmd, res->command, res->command_length, 1);
 
 				ALLOC_ZVAL(body);
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)				
@@ -986,29 +1144,55 @@ PHP_FUNCTION(stomp_read_frame)
 				body->refcount = 1;
 				body->is_ref = 0;
 #endif
+#else
+				zval _cmd, *cmd = &_cmd, _body, *body = &_body;
+#endif
+
+#ifdef ZEND_ENGINE_2
+				ZVAL_STRINGL(cmd, res->command, res->command_length, 1);
+#else
+				ZVAL_STRINGL(cmd, res->command, res->command_length);
+#endif
+
 				if (res->body) {
+#ifdef ZEND_ENGINE_2
 					ZVAL_STRINGL(body, res->body, res->body_length, 1);
+#else
+					ZVAL_STRINGL(body, res->body, res->body_length);
+#endif
 				} else {
 					ZVAL_NULL(body);
 				}
 
 				fci.size = sizeof(fci);
 				fci.function_table = &ce->function_table;
-				fci.function_name = NULL;
 				fci.symbol_table = NULL;
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)
-				fci.object_ptr = return_value;
-#else 
-				fci.object_pp = &return_value;
-#endif				
-				fci.retval_ptr_ptr = &retval_ptr;
 
 				// PARAMS
 				fci.param_count = 3;
+#ifdef ZEND_ENGINE_2
 				fci.params = (zval***) safe_emalloc(sizeof(zval*), 3, 0);
 				fci.params[0] = &cmd;
 				fci.params[1] = &headers;
 				fci.params[2] = &body;
+
+				fci.function_name = NULL;
+# if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)
+				fci.object_ptr = return_value;
+# else 
+				fci.object_pp = &return_value;
+# endif				
+				fci.retval_ptr_ptr = &retval_ptr;
+#else
+				fci.params = (zval*) safe_emalloc(sizeof(zval), 3, 0);
+				ZVAL_COPY_VALUE(&fci.params[0], cmd);
+				ZVAL_COPY_VALUE(&fci.params[1], headers);
+				ZVAL_COPY_VALUE(&fci.params[2], body);
+
+				ZVAL_UNDEF(&fci.function_name);
+				fci.object = Z_OBJ_P(return_value);
+				fci.retval = retval_ptr;
+#endif
 
 				fci.no_separation = 1;
 
@@ -1017,31 +1201,53 @@ PHP_FUNCTION(stomp_read_frame)
 				fcc.calling_scope = EG(scope);
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)				
 				fcc.called_scope = Z_OBJCE_P(return_value);
-				fcc.object_ptr = return_value;
-#else
-				fcc.object_pp = &return_value;
 #endif				
 				if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
+#ifdef ZEND_ENGINE_2
 					zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Could not execute %s::%s()", ce->name, ce->constructor->common.function_name);
+#else
+					zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Could not execute %s::%s()", ZSTR_VAL(ce->name), ZSTR_VAL(ce->constructor->common.function_name));
+#endif
 				} else {
 					if (retval_ptr) {
+#ifdef ZEND_ENGINE_2
 						zval_ptr_dtor(&retval_ptr);
+#else
+						zval_ptr_dtor(retval_ptr);
+#endif
 					}
 				}
 				if (fci.params) {
 					efree(fci.params);
 				}
-			
+
+#ifdef ZEND_ENGINE_2
 				zval_ptr_dtor(&cmd);
 				zval_ptr_dtor(&body);
+#else
+				zval_ptr_dtor(cmd);
+				zval_ptr_dtor(body);
+#endif
 			}
 
+#ifdef ZEND_ENGINE_2
 			zval_ptr_dtor(&headers);
+#else
+			zval_ptr_dtor(headers);
+#endif
 		} else {
 			array_init(return_value);
+#ifdef ZEND_ENGINE_2
 			add_assoc_string_ex(return_value, "command", sizeof("command"), res->command, 1);
+#else
+			add_assoc_string_ex(return_value, "command", sizeof("command"), res->command);
+#endif
 			if (res->body) {
+#ifdef ZEND_ENGINE_2
 				add_assoc_stringl_ex(return_value, "body", sizeof("body"), res->body, res->body_length, 1);
+#else
+				add_assoc_stringl_ex(return_value, "body", sizeof("body"), res->body, res->body_length);
+#endif
 			}
 			add_assoc_zval_ex(return_value, "headers", sizeof("headers"), headers);
 		}
@@ -1074,13 +1280,17 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs|a", &arg, &transaction_id, &transaction_id_length, &headers) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	INIT_FRAME_L(frame, cmd, strlen(cmd));
 
 	if (transaction_id_length > 0) { 
+#ifdef ZEND_ENGINE_2
 		zend_hash_add(frame.headers, "transaction", sizeof("transaction"), transaction_id, transaction_id_length + 1, NULL);
+#else
+		zend_hash_str_add_ptr(frame.headers, ZEND_STRL("transaction"), estrdup(transaction_id));
+#endif
 	}
 
 	/* Translate a PHP array to a stomp_header array */
@@ -1141,7 +1351,7 @@ static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz|a!", &arg, &msg, &headers) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	INIT_FRAME(frame, cmd);
@@ -1151,9 +1361,17 @@ static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 	}
 
 	if (Z_TYPE_P(msg) == IS_STRING) {
+#ifdef ZEND_ENGINE_2
 		zend_hash_add(frame.headers, "message-id", sizeof("message-id"), Z_STRVAL_P(msg), Z_STRLEN_P(msg) + 1, NULL);
+#else
+		zend_hash_str_add_ptr(frame.headers, ZEND_STRL("message-id"), estrdup(Z_STRVAL_P(msg)));
+#endif
 	} else if (Z_TYPE_P(msg) == IS_OBJECT && instanceof_function(Z_OBJCE_P(msg), stomp_ce_frame TSRMLS_CC)) {
+#ifdef ZEND_ENGINE_2
 		zval *frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1 TSRMLS_CC);
+#else
+		zval rv, *frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1, &rv);
+#endif
 		if (Z_TYPE_P(frame_obj_prop) == IS_ARRAY) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
 		}
@@ -1202,7 +1420,7 @@ PHP_FUNCTION(stomp_error)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp);
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	if (stomp->error) {
@@ -1211,9 +1429,18 @@ PHP_FUNCTION(stomp_error)
 			strcpy(error_msg, stomp->error);
 			strcat(error_msg, "\n\n");
 			strcat(error_msg, stomp->error_details);
+#ifdef ZEND_ENGINE_2
 			RETURN_STRING(error_msg, 0);
+#else
+			RETVAL_STRING(error_msg);
+			efree(error_msg);
+#endif
 		} else {
+#ifdef ZEND_ENGINE_2
 			RETURN_STRING(stomp->error, 1);
+#else
+			RETURN_STRING(stomp->error);
+#endif
 		}
 	} else {
 		RETURN_FALSE;
@@ -1239,7 +1466,7 @@ PHP_FUNCTION(stomp_set_read_timeout)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl|l", &arg, &sec, &usec) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	stomp->options.read_timeout_sec = sec;
@@ -1261,7 +1488,7 @@ PHP_FUNCTION(stomp_get_read_timeout)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 			return;
 		}
-		ZEND_FETCH_RESOURCE(stomp, stomp_t *, &arg, -1, PHP_STOMP_RES_NAME, le_stomp); 
+		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
 	array_init(return_value);
@@ -1300,11 +1527,14 @@ PHP_METHOD(stompframe, __construct)
 PHP_METHOD(stompexception, getDetails)
 {
 	zval *object = getThis();	
-	zval *details = NULL;
 
-	details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1 TSRMLS_CC);
-
+#ifdef ZEND_ENGINE_2
+	zval *details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1 TSRMLS_CC);
 	RETURN_STRINGL(Z_STRVAL_P(details), Z_STRLEN_P(details), 1);
+#else
+	zval rv, *details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1, &rv);
+	RETURN_STRINGL(Z_STRVAL_P(details), Z_STRLEN_P(details));
+#endif
 }
 /* }}} */
 

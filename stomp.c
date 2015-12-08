@@ -23,7 +23,11 @@
 #endif
 
 #include "php.h"
-#include "ext/standard/php_smart_str.h"
+#ifdef ZEND_ENGINE_2
+# include "ext/standard/php_smart_str.h"
+#else
+# include "Zend/zend_smart_str.h"
+#endif
 #include "stomp.h"
 #include "php_stomp.h"
 #ifdef HAVE_NETINET_IN_H
@@ -41,6 +45,7 @@ static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
 	php_printf("%s\n", frame->command);
 	/* Headers */
 	if (frame->headers) {
+#ifdef ZEND_ENGINE_2
 		char *key;
 		ulong pos;
 		zend_hash_internal_pointer_reset(frame->headers);
@@ -57,6 +62,16 @@ static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
 			php_printf("\n");
 			zend_hash_move_forward(frame->headers);
 		}
+#else
+		zend_string *key;
+		char *value;
+		ZEND_HASH_FOREACH_STR_KEY_PTR(frame->headers, key, value) {
+			if (!key) {
+				break;
+			}
+			php_printf("%s:%s\n", ZSTR_VAL(key), value);
+		} ZEND_HASH_FOREACH_END();
+#endif
 	}
 	php_printf("\n%s\n", frame->body);
 	php_printf("------ END FRAME ------\n");
@@ -216,7 +231,11 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 	tv.tv_sec = stomp->options.connect_timeout_sec;
 	tv.tv_usec = stomp->options.connect_timeout_usec;
 
+#ifdef ZEND_ENGINE_2
 	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0 TSRMLS_CC);
+#else
+	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0, 0);
+#endif
 	if (stomp->fd == -1) {
 		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
 		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
@@ -318,7 +337,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 
 	/* Headers */
 	if (frame->headers) {
-
+#ifdef ZEND_ENGINE_2
 		char *key;
 		ulong pos;
 		zend_hash_internal_pointer_reset(frame->headers);
@@ -337,6 +356,16 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 
 			zend_hash_move_forward(frame->headers);
 		}
+#else
+		zend_string *key;
+		char *value;
+		ZEND_HASH_FOREACH_STR_KEY_PTR(frame->headers, key, value) {
+			smart_str_appends(&buf, ZSTR_VAL(key));
+			smart_str_appendc(&buf, ':');
+			smart_str_appends(&buf, value);
+			smart_str_appendc(&buf, '\n');
+		} ZEND_HASH_FOREACH_END();
+#endif
 	}
 
 	if (frame->body_length > 0) {
@@ -362,14 +391,22 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 #ifdef HAVE_STOMP_SSL
 	if (stomp->options.use_ssl) {
 		int ret;
+# ifdef ZEND_ENGINE_2
 		if (-1 == (ret = SSL_write(stomp->ssl_handle, buf.c, buf.len))) {
+# else
+		if (-1 == (ret = SSL_write(stomp->ssl_handle, ZSTR_VAL(buf.s), ZSTR_LEN(buf.s)))) {
+# endif
 			smart_str_free(&buf);
 			stomp_set_error(stomp, "Unable to send data", errno, "SSL error %d", SSL_get_error(stomp->ssl_handle, ret));
 			return 0;
 		}
 	} else {
 #endif
+#ifdef ZEND_ENGINE_2
 		if (-1 == send(stomp->fd, buf.c, buf.len, 0)) {
+#else
+		if (-1 == send(stomp->fd, ZSTR_VAL(buf.s), ZSTR_LEN(buf.s), 0)) {
+#endif
 			smart_str_free(&buf);
 			stomp_set_error(stomp, "Unable to send data", errno, "%s", strerror(errno));
 			return 0;
@@ -646,13 +683,21 @@ stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 			value = p2+1;
 
 			/* Insert key/value into hash table. */
+#ifdef ZEND_ENGINE_2
 			zend_hash_add(f->headers, key, strlen(key) + 1, value, strlen(value) + 1, NULL);
+#else
+			zend_hash_str_add_ptr(f->headers, key, strlen(key) + 1, value);
+#endif
 			efree(p);
 		}
 	}
 
 	/* Check for the content length */
+#ifdef ZEND_ENGINE_2
 	if (zend_hash_find(f->headers, "content-length", sizeof("content-length"), (void **)&length_str) == SUCCESS) {
+#else
+	if ((length_str = zend_hash_str_find_ptr(f->headers, ZEND_STRL("content-length"))) != NULL) {
+#endif
 		int recv_size = 0;
 		char endbuffer[2];
 
@@ -687,14 +732,22 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 	int success = 1;
 	char *receipt = NULL;
 
+#ifdef ZEND_ENGINE_2
 	if (zend_hash_find(frame->headers, "receipt", sizeof("receipt"), (void **)&receipt) == SUCCESS) {
+#else
+	if ((receipt = zend_hash_str_find_ptr(frame->headers, ZEND_STRL("receipt"))) != NULL) {
+#endif
 		success = 0;
 		while (1) {
 			stomp_frame_t *res = stomp_read_frame_ex(stomp, 0);
 			if (res) {
 				if (0 == strncmp("RECEIPT", res->command, sizeof("RECEIPT") - 1)) {
 					char *receipt_id = NULL;
+#ifdef ZEND_ENGINE_2
 					if (zend_hash_find(res->headers, "receipt-id", sizeof("receipt-id"), (void **)&receipt_id) == SUCCESS
+#else
+					if ((receipt_id = zend_hash_str_find_ptr(res->headers, ZEND_STRL("receipt-id"))) != NULL
+#endif
 							&& strlen(receipt) == strlen(receipt_id)
 							&& !strcmp(receipt, receipt_id)) {
 						success = 1;
@@ -705,7 +758,11 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 					return success;
 				} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 					char *error_msg = NULL;
+#ifdef ZEND_ENGINE_2
 					if (zend_hash_find(res->headers, "message", sizeof("message"), (void **)&error_msg) == SUCCESS) {
+#else
+					if ((error_msg = zend_hash_str_find_ptr(res->headers, ZEND_STRL("message"))) != NULL) {
+#endif
 						stomp_set_error(stomp, error_msg, 0, "%s", res->body);
 					}
 					stomp_free_frame(res);
