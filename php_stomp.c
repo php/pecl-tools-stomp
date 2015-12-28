@@ -570,7 +570,7 @@ PHP_FUNCTION(stomp_connect)
 		}
 
 		/* Retreive Response */
-		res = stomp_read_frame(stomp);
+		res = stomp_read_frame_ex(stomp, 0);
 		if (NULL == res) {
 			STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
 		} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
@@ -930,7 +930,7 @@ PHP_FUNCTION(stomp_read_frame)
 	}
 
 
-	if ((res = stomp_read_frame(stomp))) {
+	if ((res = stomp_read_frame_ex(stomp, 1))) {
 		zval *headers = NULL;
 
 		if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {

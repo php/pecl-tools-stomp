@@ -91,7 +91,6 @@ void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *
 void stomp_free_frame(stomp_frame_t *frame);
 
 #define stomp_select(s) stomp_select_ex(s, s->options.read_timeout_sec, s->options.read_timeout_sec)
-#define stomp_read_frame(c) stomp_read_frame_ex(c, 1)
 #endif /* _STOMP_H_ */
 
 /*
