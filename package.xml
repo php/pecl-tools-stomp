@@ -18,16 +18,24 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>gena01@php.net</email>
         <active>yes</active>
     </lead>
-    <date>XXXX-XX-XX</date>
-    <version><release>1.0.X</release><api>1.0.X</api></version>
+    <date>2016-01-04</date>
+    <version><release>1.0.9</release><api>1.0.9</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
     <notes>
+- Adding .travis.yml to enable Travis CI test runner. (Gennady)
+- Adding a basic README file. (Gennady)
+- Check stomp connection status after _stomp_recv. (Gennady)
+- Commenting out activemq.prefetchSize hardcoded header for SUBSCRIBE frame. (Gennady)
+- Make login and passcode headers optional (if no creds provided). (Gennady)
+- Fixing type cast warning, introduced a new int variable. (Gennady)
+- Fixing stomp_writable() check so we can catch when connect failed. (Gennady)
     </notes>
     <contents>
         <dir name="/">
             <file role="doc" name="CREDITS" />
             <file role="doc" name="LICENSE" />
+            <file role="doc" name="README" />
             <file role="src" name="config.m4" />
             <file role="src" name="config.w32" />
             <file role="src" name="php_stomp.c" />
@@ -38,11 +46,13 @@ This extension allows php applications to communicate with any Stomp compliant M
             <file role="test" name="tests/002-version.phpt" />
             <file role="test" name="tests/003-connect/001.phpt" />
             <file role="test" name="tests/003-connect/002.phpt" />
+            <file role="test" name="tests/003-connect/003.phpt" />
             <file role="test" name="tests/004-getSessionId/001.phpt" />
             <file role="test" name="tests/005-close/001.phpt" />
             <file role="test" name="tests/005-close/002.phpt" />
             <file role="test" name="tests/006-send/001.phpt" />
             <file role="test" name="tests/006-send/002.phpt" />
+            <file role="test" name="tests/006-send/003.phpt" />
             <file role="test" name="tests/007-subscribe/001.phpt" />
             <file role="test" name="tests/008-unsubscribe/001.phpt" />
             <file role="test" name="tests/009-readFrame/001.phpt" />
@@ -50,9 +60,12 @@ This extension allows php applications to communicate with any Stomp compliant M
             <file role="test" name="tests/009-readFrame/003.phpt" />
             <file role="test" name="tests/009-readFrame/004.phpt" />
             <file role="test" name="tests/009-readFrame/005.phpt" />
+            <file role="test" name="tests/009-readFrame/006.phpt" />
             <file role="test" name="tests/010-timeout/001.phpt" />
             <file role="test" name="tests/010-timeout/002.phpt" />
             <file role="test" name="tests/011-commit/001.phpt" />
+            <file role="test" name="tests/bug_16930.phpt" />
+            <file role="test" name="tests/bug_16936.phpt" />
             <file role="doc" name="doc/classes.php" />
             <file role="doc" name="doc/functions.php" />
             <file role="doc" name="examples/oop.php" />
@@ -83,6 +96,21 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>1.0.9</release><api>1.0.9</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2016-01-04</date>
+            <notes>
+- Adding .travis.yml to enable Travis CI test runner. (Gennady)
+- Adding a basic README file. (Gennady)
+- Check stomp connection status after _stomp_recv. (Gennady)
+- Commenting out activemq.prefetchSize hardcoded header for SUBSCRIBE frame. (Gennady)
+- Make login and passcode headers optional (if no creds provided). (Gennady)
+- Fixing type cast warning, introduced a new int variable. (Gennady)
+- Fixing stomp_writable() check so we can catch when connect failed. (Gennady)
+            </notes>
+        </release>
         <release>
             <version><release>1.0.8</release><api>1.0.8</api></version>
             <stability><release>stable</release><api>stable</api></stability>
