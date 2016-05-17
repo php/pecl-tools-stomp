@@ -438,7 +438,8 @@ static zend_object *php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 
 	return retval;
 #else
-	return (zend_object *) intern;
+	intern->std.handlers = zend_get_std_object_handlers();
+	return &intern->std;
 #endif
 }
 /* }}} */
