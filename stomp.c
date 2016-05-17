@@ -686,7 +686,7 @@ stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 #ifdef ZEND_ENGINE_2
 			zend_hash_add(f->headers, key, strlen(key) + 1, value, strlen(value) + 1, NULL);
 #else
-			zend_hash_str_add_ptr(f->headers, key, strlen(key) + 1, value);
+			zend_hash_str_add_ptr(f->headers, key, strlen(key), value);
 #endif
 			efree(p);
 		}
