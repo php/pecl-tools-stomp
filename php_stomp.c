@@ -158,6 +158,10 @@ zend_class_entry *stomp_ce_exception;
 zend_class_entry *stomp_ce_frame;
 /* }}} */
 
+#ifndef ZEND_ENGINE_2
+static zend_object_handlers stomp_obj_handlers;
+#endif
+
 /* {{{ arg_info */
 ZEND_BEGIN_ARG_INFO_EX(stomp_no_args, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -420,7 +424,11 @@ static zend_object *php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 	zval *tmp;
 #endif	
 
+#ifndef ZEND_ENGINE_2
+	intern = (stomp_object_t *) ecalloc(1, sizeof(stomp_object_t) + zend_object_properties_size(ce));
+#else
 	intern = (stomp_object_t *) ecalloc(1, sizeof(stomp_object_t));
+#endif
 	intern->stomp = NULL;
 	
 	zend_object_std_init(&intern->std, ce TSRMLS_CC);
@@ -438,7 +446,7 @@ static zend_object *php_stomp_new(zend_class_entry *ce TSRMLS_DC)
 
 	return retval;
 #else
-	intern->std.handlers = zend_get_std_object_handlers();
+	intern->std.handlers = &stomp_obj_handlers;
 	return &intern->std;
 #endif
 }
@@ -456,6 +464,10 @@ PHP_MINIT_FUNCTION(stomp)
 	INIT_CLASS_ENTRY(ce, PHP_STOMP_CLASSNAME, stomp_methods);
 	stomp_ce_stomp = zend_register_internal_class(&ce TSRMLS_CC);
 	stomp_ce_stomp->create_object = php_stomp_new;
+#ifndef ZEND_ENGINE_2
+	memcpy(&stomp_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	stomp_obj_handlers.offset = XtOffsetOf(stomp_object_t, std);
+#endif
 
 	/* Register StompFrame class */
 	INIT_CLASS_ENTRY(ce, PHP_STOMP_FRAME_CLASSNAME, stomp_frame_methods);
