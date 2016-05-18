@@ -33,7 +33,7 @@
 	f = (stomp_frame_t *) emalloc(sizeof(stomp_frame_t)); \
 	f->command = NULL; f->body = NULL; \
 	ALLOC_HASHTABLE(f->headers); \
-	zend_hash_init(f->headers, 0, NULL, NULL, 0);
+	zend_hash_init(f->headers, 0, NULL, stomp_free_str_ptr, 0);
 
 typedef struct _stomp_options {
 	long connect_timeout_sec;

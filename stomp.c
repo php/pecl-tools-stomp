@@ -79,6 +79,14 @@ static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
 #endif
 /* }}} */
 
+#ifdef ZEND_ENGINE_2
+#define stomp_free_str_ptr  NULL
+#else
+static void stomp_free_str_ptr(zval* zv) {
+	efree(Z_PTR_P(zv));
+}
+#endif
+
 /* {{{ stomp_init
  */
 stomp_t *stomp_init()
