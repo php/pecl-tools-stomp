@@ -1121,11 +1121,13 @@ PHP_FUNCTION(stomp_read_frame)
 #else
 			zend_string *key;
 			char *value;
+			zval val;
 			ZEND_HASH_FOREACH_STR_KEY_PTR(res->headers, key, value) {
 				if (!key) {
 					break;
 				}
-				add_assoc_string_ex(headers, ZSTR_VAL(key), ZSTR_LEN(key), value);
+				ZVAL_STRING(&val, value);
+				zend_hash_update(Z_ARRVAL_P(headers), key, &val);
 			} ZEND_HASH_FOREACH_END();
 #endif
 		}
@@ -1253,16 +1255,20 @@ PHP_FUNCTION(stomp_read_frame)
 #ifdef ZEND_ENGINE_2
 			add_assoc_string_ex(return_value, "command", sizeof("command"), res->command, 1);
 #else
-			add_assoc_string_ex(return_value, "command", sizeof("command"), res->command);
+			add_assoc_string_ex(return_value, "command", sizeof("command") - 1, res->command);
 #endif
 			if (res->body) {
 #ifdef ZEND_ENGINE_2
 				add_assoc_stringl_ex(return_value, "body", sizeof("body"), res->body, res->body_length, 1);
 #else
-				add_assoc_stringl_ex(return_value, "body", sizeof("body"), res->body, res->body_length);
+				add_assoc_stringl_ex(return_value, "body", sizeof("body") - 1, res->body, res->body_length);
 #endif
 			}
+#ifdef ZEND_ENGINE_2
 			add_assoc_zval_ex(return_value, "headers", sizeof("headers"), headers);
+#else
+			add_assoc_zval_ex(return_value, "headers", sizeof("headers") - 1, headers);
+#endif
 		}
 
 		stomp_free_frame(res);
@@ -1277,7 +1283,7 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	char *transaction_id = NULL;
-	int transaction_id_length = 0;
+	zend_long transaction_id_length = 0;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
 	zval *headers = NULL;
@@ -1505,8 +1511,13 @@ PHP_FUNCTION(stomp_get_read_timeout)
 	}
 
 	array_init(return_value);
+#ifdef ZEND_ENGINE_2
 	add_assoc_long_ex(return_value, "sec", sizeof("sec"), stomp->options.read_timeout_sec);
 	add_assoc_long_ex(return_value, "usec", sizeof("usec"), stomp->options.read_timeout_usec);
+#else
+	add_assoc_long_ex(return_value, "sec", sizeof("sec") - 1, stomp->options.read_timeout_sec);
+	add_assoc_long_ex(return_value, "usec", sizeof("usec") - 1, stomp->options.read_timeout_usec);
+#endif
 }
 /* }}} */
 
@@ -1516,7 +1527,7 @@ PHP_METHOD(stompframe, __construct)
 {
 	zval *object = getThis();
 	char *command = NULL, *body = NULL;
-	int command_length = 0, body_length = -1;
+	zend_long command_length = 0, body_length = -1;
 	zval *headers = NULL;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sa!s", &command, &command_length, &headers, &body, &body_length) == FAILURE) {
@@ -1546,7 +1557,7 @@ PHP_METHOD(stompexception, getDetails)
 	RETURN_STRINGL(Z_STRVAL_P(details), Z_STRLEN_P(details), 1);
 #else
 	zval rv, *details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1, &rv);
-	RETURN_STRINGL(Z_STRVAL_P(details), Z_STRLEN_P(details));
+	RETURN_STR(zval_get_string(details));
 #endif
 }
 /* }}} */
