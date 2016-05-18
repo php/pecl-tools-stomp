@@ -666,7 +666,7 @@ PHP_FUNCTION(stomp_connect)
 		}
 
 		/* Retreive Response */
-		res = stomp_read_frame(stomp);
+		res = stomp_read_frame_ex(stomp, 0);
 		if (NULL == res) {
 			STOMP_ERROR(0, PHP_STOMP_ERR_SERVER_NOT_RESPONDING);
 		} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
@@ -942,12 +942,21 @@ PHP_FUNCTION(stomp_subscribe)
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 	}
 
-	/* Add the destination */
 #ifdef ZEND_ENGINE_2
+	/* Add the ack:client (if not overwritten through headers)*/
+	if (!zend_hash_exists(frame.headers, "ack", sizeof("ack"))) {
+		zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
+	}
+	/* Add the destination */
 	zend_hash_add(frame.headers, "ack", sizeof("ack"), "client", sizeof("client"), NULL);
 	zend_hash_add(frame.headers, "destination", sizeof("destination"), destination, destination_length + 1, NULL);
 	//zend_hash_add(frame.headers, "activemq.prefetchSize", sizeof("activemq.prefetchSize"), "1", sizeof("1"), NULL); 
 #else
+	/* Add the ack:client (if not overwritten through headers)*/
+	if (!zend_hash_str_exists(frame.headers, "ack", sizeof("ack") - 1)) {
+		zend_hash_str_add_ptr(frame.headers, "ack", sizeof("ack") - 1, estrndup("client", sizeof("client") - 1));
+	}
+	/* Add the destination */
 	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("ack"), estrdup("client"));
 	zend_hash_str_add_ptr(frame.headers, ZEND_STRL("destination"), estrdup(destination));
 	//zend_hash_str_add_ptr(frame.headers, ZEND_STRL("activemq.prefetchSize"), estrdup("1"));

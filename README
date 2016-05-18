@@ -1,0 +1,20 @@
+stomp
+=====
+
+This extension allows php applications to communicate with any Stomp compliant Message Broker(s) through easy object 
+oriented and procedural interfaces.
+
+This extension currently implements STOMP 1.0 protocol: https://stomp.github.io/stomp-specification-1.0.html
+
+[The stomp extension at the PECL Repository website](http://pecl.php.net/package/stomp)
+
+Documentation
+=============
+
+For documentation of the functions that this extension provides can be found here: http://www.php.net/stomp
+
+Contribute
+==========
+
+Your contributions and bugreports are highly appreciated. To contribute, fork and create a pull request. To report a
+bug use the [PHP Bug Tracking System](https://bugs.php.net/)
