@@ -562,7 +562,7 @@ PHP_FUNCTION(stomp_connect)
 	zval *headers = NULL;
 	stomp_t *stomp = NULL;
 	char *broker = NULL, *username = NULL, *password = NULL;
-	int broker_len = 0, username_len = 0, password_len = 0;
+	zend_long broker_len = 0, username_len = 0, password_len = 0;
 	php_url *url_parts;
 
 #ifdef HAVE_STOMP_SSL    
@@ -818,7 +818,7 @@ PHP_FUNCTION(stomp_send)
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	char *destination = NULL;
-	int destination_length = 0;
+	zend_long destination_length = 0;
 	zval *msg = NULL, *headers = NULL;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
@@ -910,7 +910,7 @@ PHP_FUNCTION(stomp_subscribe)
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	char *destination = NULL;
-	int destination_length = 0;
+	zend_long destination_length = 0;
 	zval *headers = NULL;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
@@ -969,7 +969,7 @@ PHP_FUNCTION(stomp_unsubscribe)
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	char *destination = NULL;
-	int destination_length = 0;
+	zend_long destination_length = 0;
 	zval *headers = NULL;
 	stomp_frame_t frame = {0}; 
 	int success = 0;
@@ -1046,7 +1046,7 @@ PHP_FUNCTION(stomp_read_frame)
 	stomp_t *stomp = NULL;
 	stomp_frame_t *res = NULL;
 	char *class_name = NULL;
-	int class_name_len = 0;
+	zend_long class_name_len = 0;
 	zend_class_entry *ce = NULL;
 
 	if (stomp_object) {
@@ -1215,7 +1215,11 @@ PHP_FUNCTION(stomp_read_frame)
 				fcc.function_handler = ce->constructor;
 				fcc.calling_scope = EG(scope);
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3) || (PHP_MAJOR_VERSION > 5)				
+#ifdef ZEND_ENGINE_2
 				fcc.called_scope = Z_OBJCE_P(return_value);
+#else
+				fcc.object = Z_OBJ_P(return_value);
+#endif
 #endif				
 				if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
 #ifdef ZEND_ENGINE_2
@@ -1473,7 +1477,7 @@ PHP_FUNCTION(stomp_set_read_timeout)
 {
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
-	long sec = 0, usec = 0;
+	zend_long sec = 0, usec = 0;
 	if (stomp_object) {
 		stomp_object_t *i_obj = NULL;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l", &sec, &usec) == FAILURE) {
