@@ -24,13 +24,8 @@
 #include "stomp.h"
 
 typedef struct _stomp_object {
-#ifdef ZEND_ENGINE_2
-	zend_object std;
-#endif
 	stomp_t *stomp;
-#ifndef ZEND_ENGINE_2
 	zend_object std;
-#endif
 } stomp_object_t; 
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
