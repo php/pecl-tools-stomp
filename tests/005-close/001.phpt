@@ -2,7 +2,7 @@
 Test stomp_close() - tests parameters
 --SKIPIF--
 <?php 
-    if (!extension_loaded("stomp")) print "skip"; 
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 

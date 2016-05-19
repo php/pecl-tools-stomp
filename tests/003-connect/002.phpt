@@ -1,10 +1,14 @@
 --TEST--
 Test stomp_connect() - Test connection 
 --SKIPIF--
-<?php if (!extension_loaded("stomp")) print "skip"; ?>
+<?php
+$require_connection = true;
+include dirname(__DIR__). "/skipif.inc";
+?>
 --FILE--
 <?php 
-var_dump(stomp_connect());
+include dirname(__DIR__) . "/config.inc";
+var_dump(stomp_connect(STOMP_ADDRESS));
 var_dump(stomp_connect_error());
 ?>
 --EXPECTF--

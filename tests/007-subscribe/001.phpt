@@ -1,13 +1,15 @@
 --TEST--
 Test Stomp::subscribe()
 --SKIPIF--
-<?php 
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+<?php
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+include dirname(__DIR__) . "/skipif.inc";
+
+$s = new Stomp(STOMP_ADDRESS);
 $s->subscribe('', array());
 $s->subscribe('/queue/test', 'string');
 ?>

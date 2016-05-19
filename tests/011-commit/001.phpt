@@ -2,12 +2,15 @@
 Test Stomp::commit() - tests functionnality and parameters
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+
+include dirname(__DIR__) . "/config.inc";
+
+$s = new Stomp(STOMP_ADDRESS);
 
 /* begin a transaction */
 var_dump($s->begin('t1'));

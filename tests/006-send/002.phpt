@@ -2,12 +2,15 @@
 Test stomp::send() - tests parameters
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+
+include dirname(__DIR__) . "/config.inc";
+
+$s = new Stomp(STOMP_ADDRESS);
 
 $s->send('', array());
 $s->send('/queue/test-06', array());

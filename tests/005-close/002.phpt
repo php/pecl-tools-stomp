@@ -2,12 +2,13 @@
 Test stomp_close()
 --SKIPIF--
 <?php 
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$link = stomp_connect();
+include dirname(__DIR__) . "/config.inc";
+$link = stomp_connect(STOMP_ADDRESS);
 if($link) echo "success" . PHP_EOL;
 if(stomp_close($link)) echo "closed";
 ?>

@@ -2,12 +2,15 @@
 Test stomp::readFrame() - tests functionnality and parameters
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+include dirname(__DIR__) . "/config.inc";
+
+$s = new Stomp(STOMP_ADDRESS);
+
 $s->send('/queue/test-09', 'A test Message');
 $s->subscribe('/queue/test-09', array('ack' => 'auto'));
 var_dump($s->readFrame()->body);

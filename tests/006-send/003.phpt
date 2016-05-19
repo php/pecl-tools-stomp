@@ -2,12 +2,13 @@
 Test stomp::send() - test send with receipt
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+include dirname(__DIR__) . "/skipif.inc";
+$s = new Stomp(STOMP_ADDRESS);
 var_dump($s->send('/queue/test-06', 'A real message', array('receipt' => 'message-12345')));
 ?>
 --EXPECTF--

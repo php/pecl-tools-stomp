@@ -1,7 +1,9 @@
 --TEST--
 Test stomp_connect() - Test error on CONNECT
 --SKIPIF--
-<?php if (!extension_loaded("stomp")) print "skip"; ?>
+<?php
+include "../skipif.inc"
+?>
 --FILE--
 <?php 
 try {

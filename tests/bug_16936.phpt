@@ -1,16 +1,21 @@
 --TEST--
 Bug #16936 - Module segfaults on readFrame if Frame > STOMP_BUFSIZE
 --SKIPIF--
-<?php if (!extension_loaded("stomp")) print "skip"; ?>
+<?php
+$require_connection = true;
+include __DIR__ . "/skipif.inc";
+?>
 --FILE--
 <?php
+
+include __DIR__ . "/config.inc";
 
 $queue  = '/queue/foo';
 $msg    = str_repeat('bar', 3000);
 
 /* connection */
 try {
-    $stomp = new Stomp();
+    $stomp = new Stomp(STOMP_ADDRESS);
 } catch(StompException $e) {
     die('Connection failed: ' . $e->getMessage());
 }

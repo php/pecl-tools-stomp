@@ -2,11 +2,13 @@
 Test stomp::readFrame() - custom frame class 
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
+
+include dirname(__DIR__) . "/config.inc";
 
 class customFrame extends stompFrame
 {
@@ -16,7 +18,7 @@ class customFrame extends stompFrame
     }
 }
 
-$s = new Stomp();
+$s = new Stomp(STOMP_ADDRESS);
 $s->send('/queue/test-09', 'A test Message');
 $s->subscribe('/queue/test-09', array('ack' => 'auto'));
 $frame = $s->readFrame('customFrame');

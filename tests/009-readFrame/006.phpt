@@ -2,12 +2,16 @@
 Test stomp::readFrame() - test frame stack
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
-    if (!stomp_connect()) print "skip";
+$require_connection = true;
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php 
-$s = new Stomp();
+
+include dirname(__DIR__) . "/config.inc";
+
+$s = new Stomp(STOMP_ADDRESS);
+
 var_dump($s->subscribe('/queue/test-buffer', array('ack' => 'auto')));
 var_dump($s->send('/queue/test-buffer', "Message1", array('receipt' => 'msg-1')));
 var_dump($s->send('/queue/test-buffer', "Message2", array('receipt' => 'msg-2')));
