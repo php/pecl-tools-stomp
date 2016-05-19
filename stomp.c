@@ -56,11 +56,6 @@ static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
 #endif
 /* }}} */
 
-static void stomp_free_str_ptr(zval* zv) /* {{{ */ {
-	efree(Z_PTR_P(zv));
-}
-/* }}} */
-
 /* {{{ stomp_init
  */
 stomp_t *stomp_init()
