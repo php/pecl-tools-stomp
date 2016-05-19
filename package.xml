@@ -35,6 +35,8 @@ This extension allows php applications to communicate with any Stomp compliant M
             <file role="src" name="php_stomp.h" />
             <file role="src" name="stomp.c" />
             <file role="src" name="stomp.h" />
+            <file role="test" name="tests/config.inc" />
+            <file role="test" name="tests/skipif.inc" />
             <file role="test" name="tests/001-stomp.phpt" />
             <file role="test" name="tests/002-version.phpt" />
             <file role="test" name="tests/003-connect/001.phpt" />
