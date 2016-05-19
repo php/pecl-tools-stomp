@@ -469,30 +469,34 @@ PHP_FUNCTION(stomp_connect)
 	zval *stomp_object = getThis();
 	zval *headers = NULL;
 	stomp_t *stomp = NULL;
-	char *broker = NULL, *username = NULL, *password = NULL;
-	zend_long broker_len = 0, username_len = 0, password_len = 0;
+	zend_string *broker = NULL, *username = NULL, *password = NULL;
 	php_url *url_parts;
 
 #ifdef HAVE_STOMP_SSL    
 	int use_ssl = 0;
 #endif    
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() , "|sssa!", &broker, &broker_len, &username, &username_len, &password, &password_len, &headers) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() , "|SSSa!", &broker, &username, &password, &headers) == FAILURE) {
 		return;
 	}
 
 	/* Verify that broker URI */
 	if (!broker) {
-		broker = STOMP_G(default_broker);
+		broker = STOMP_G(default_broker)?
+			zend_string_init(STOMP_G(default_broker), strlen(STOMP_G(default_broker)), 0) : NULL;
+	} else {
+		zend_string_copy(broker);
 	}
 
-	url_parts = php_url_parse_ex(broker, strlen(broker));
+	url_parts = php_url_parse_ex(ZSTR_VAL(broker), ZSTR_LEN(broker));
 	
 	if (!url_parts || !url_parts->host) {
 		STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI);
+		zend_string_release(broker);
 		php_url_free(url_parts);
 		return;
 	}
+	zend_string_release(broker);
 
 	if (url_parts->scheme) {
 		if (strcmp(url_parts->scheme, "ssl") == 0) {
@@ -525,31 +529,40 @@ PHP_FUNCTION(stomp_connect)
 	php_url_free(url_parts);
 
 	if (stomp->status) {
+		zval rv;
 		stomp_frame_t *res;
 		stomp_frame_t frame = {0};
 		int send_status;
  
 		INIT_FRAME(frame, "CONNECT");
 		if (!username) {
-			username = STOMP_G(default_username);
-			username_len = strlen(username);
+			username = zend_string_init(STOMP_G(default_username), strlen(STOMP_G(default_username)), 0);
+		} else {
+			zend_string_copy(username);
 		}
+
 		if (!password) {
-			password = STOMP_G(default_password);
-			password_len = strlen(password);
+			password = zend_string_init(STOMP_G(default_password), strlen(STOMP_G(default_password)), 0);
+		} else {
+			zend_string_copy(password);
 		}
 
 		/*
 		 * Per Stomp 1.1 "login" and "passcode" are optional. (Also this fix makes test pass against RabbitMQ)
 		 */
-        if (username_len > 0) {
-			zend_hash_str_add_ptr(frame.headers, ZEND_STRL("login"), estrdup(username));
+        if (ZSTR_LEN(username) > 0) {
+			ZVAL_STR(&rv, zend_string_copy(username));
+			zend_hash_str_add(frame.headers, "login", sizeof("login") - 1, &rv);
         }
 
-		if (password_len > 0) {
-			zend_hash_str_add_ptr(frame.headers, ZEND_STRL("passcode"), estrdup(password));
+		if (ZSTR_LEN(password)) {
+			ZVAL_STR(&rv, zend_string_copy(password));
+			zend_hash_str_add(frame.headers, "passcode", sizeof("passcode"), &rv);
 		}
  
+		zend_string_release(username);
+		zend_string_release(password);
+
 		if (NULL != headers) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 		}
@@ -576,25 +589,25 @@ PHP_FUNCTION(stomp_connect)
 				if (res->body) {
 					zend_update_property_string(stomp_ce_exception, &excobj, "details", sizeof("details")-1, (char *) res->body );
 				}
-				stomp_free_frame(res);
 			}
+			stomp_free_frame(res);
 		} else if (0 != strncmp("CONNECTED", res->command, sizeof("CONNECTED")-1)) {
 			if (stomp->error) {
 				STOMP_ERROR_DETAILS(stomp->errnum, stomp->error, stomp->error_details);
 			} else {
 				STOMP_ERROR(0, PHP_STOMP_ERR_UNKNOWN);
 			}
+			stomp_free_frame(res);
 		} else {
 			zval *key;
 			if ((key = zend_hash_str_find(res->headers, ZEND_STRL("session"))) != NULL) {
 				if (stomp->session) {
 					efree(stomp->session);
 				}
-				stomp->session = estrdup(ZSTR_VAL(Z_STR_P(key)));
+				ZEND_ASSERT(Z_TYPE_P(key) == IS_STRING);
+				stomp->session = estrdup(Z_STRVAL_P(key));
 			}
-
 			stomp_free_frame(res);
-
 			if (!stomp_object) {
 				RETURN_RES(zend_register_resource(stomp, le_stomp));
 			} else {
@@ -678,7 +691,7 @@ PHP_FUNCTION(stomp_close)
 			return;
 		}
 		FETCH_STOMP_RSRC(stomp, arg);
-		zend_list_delete(Z_RES_P(arg));
+		zend_list_close(Z_RES_P(arg));
 	}
 
 	RETURN_TRUE;
@@ -799,10 +812,10 @@ PHP_FUNCTION(stomp_subscribe)
 
 	/* Add the destination */
 	ZVAL_STRINGL(&rv, "client", sizeof("client") - 1);
-	zend_hash_str_add(frame.headers, "ack", sizeof("ack") - 1, &rv);
+	zend_hash_str_update(frame.headers, "ack", sizeof("ack") - 1, &rv);
 
 	ZVAL_STR(&rv, zend_string_copy(destination));
-	zend_hash_str_add(frame.headers, "destination", sizeof("destination") - 1, &rv);
+	zend_hash_str_update(frame.headers, "destination", sizeof("destination") - 1, &rv);
 	/* zend_hash_str_add_ptr(frame.headers, ZEND_STRL("activemq.prefetchSize"), estrdup("1")); */
 
 	if (stomp_send(stomp, &frame ) > 0) {
@@ -917,7 +930,6 @@ PHP_FUNCTION(stomp_read_frame)
 		ce = stomp_ce_frame;
 	}
 
-
 	if ((res = stomp_read_frame(stomp))) {
 		zval headers;
 
@@ -938,7 +950,7 @@ PHP_FUNCTION(stomp_read_frame)
 		if (res->headers) {
 			zend_string *key;
 			zval *val;
-			ZEND_HASH_FOREACH_STR_KEY_PTR(res->headers, key, val) {
+			ZEND_HASH_FOREACH_STR_KEY_VAL(res->headers, key, val) {
 				if (!key) {
 					break;
 				}

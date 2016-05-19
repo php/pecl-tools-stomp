@@ -43,7 +43,7 @@ static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
 	if (frame->headers) {
 		zend_string *key;
 		zval *value;
-		ZEND_HASH_FOREACH_STR_KEY_PTR(frame->headers, key, value) {
+		ZEND_HASH_FOREACH_STR_KEY_VAL(frame->headers, key, value) {
 			if (!key) {
 				break;
 			}
@@ -312,7 +312,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	if (frame->headers) {
 		zend_string *key;
 		zval *value;
-		ZEND_HASH_FOREACH_STR_KEY_PTR(frame->headers, key, value) {
+		ZEND_HASH_FOREACH_STR_KEY_VAL(frame->headers, key, value) {
 			smart_str_appends(&buf, ZSTR_VAL(key));
 			smart_str_appendc(&buf, ':');
 			smart_str_appends(&buf, Z_STRVAL_P(value));
@@ -329,7 +329,7 @@ int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
 	smart_str_appendc(&buf, '\n');
 
 	if (frame->body > 0) {
-		smart_str_appendl(&buf, frame->body, frame->body_length > 0 ? frame->body_length : strlen(frame->body));
+		smart_str_appendl(&buf, frame->body, frame->body_length);
 	}
 
 	smart_str_appendl(&buf, "\0", sizeof("\0")-1);
@@ -558,6 +558,7 @@ void stomp_free_frame(stomp_frame_t *frame)
 		}
 		if (frame->headers) {
 			zend_hash_destroy(frame->headers);
+			FREE_HASHTABLE(frame->headers);
 		}
 		efree(frame);
 	}
@@ -627,7 +628,7 @@ stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 			ZVAL_STRING(&value, p2 + 1);
 
 			/* Insert key/value into hash table. */
-			zend_hash_str_add_ptr(f->headers, key, strlen(key), &value);
+			zend_hash_str_add(f->headers, key, strlen(key), &value);
 			efree(p);
 		}
 	}
@@ -685,7 +686,7 @@ int stomp_valid_receipt(stomp_t *stomp, stomp_frame_t *frame) {
 					return success;
 				} else if (0 == strncmp("ERROR", res->command, sizeof("ERROR") - 1)) {
 					zval *error_msg;
-					if ((error_msg = zend_hash_str_find_ptr(res->headers, ZEND_STRL("message"))) != NULL) {
+					if ((error_msg = zend_hash_str_find(res->headers, ZEND_STRL("message"))) != NULL) {
 						stomp_set_error(stomp, Z_STRVAL_P(error_msg), 0, "%s", res->body);
 					}
 					stomp_free_frame(res);
