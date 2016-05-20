@@ -55,20 +55,16 @@
 #define INIT_FRAME(frame, cmd) INIT_FRAME_L(frame, cmd, sizeof(cmd)-1)
 
 #define FRAME_HEADER_FROM_HASHTABLE(h, p)  do { \
-	zval *value, zv; \
-	zend_string *key; \
+	zval *value, _zv; \
+	zend_string *key, *val; \
 	ZEND_HASH_FOREACH_STR_KEY_VAL((p), key, value) { \
 		if (key == NULL) { \
 			php_error_docref(NULL , E_WARNING, "Invalid argument or parameter array"); \
 			break; \
 		} else { \
-			if (Z_TYPE_P(value) != IS_STRING) { \
-				SEPARATE_ZVAL(value); \
-				convert_to_string(value); \
-			} \
 			if (strncmp(ZSTR_VAL(key), "content-length", sizeof("content-length")) != 0) { \
-				zend_hash_add((h), key, value); \
-				Z_TRY_ADDREF_P(value); \
+				ZVAL_STR(&_zv, zval_get_string(value)); \
+				zend_hash_add((h), key, &_zv); \
 			} \
 		} \
 	} ZEND_HASH_FOREACH_END(); \
