@@ -634,7 +634,7 @@ PHP_FUNCTION(stomp_get_session_id)
 	if (stomp_object) {
 		FETCH_STOMP_OBJECT;
 	} else {
-		zval *arg = NULL;
+		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "r", &arg) == FAILURE) {
 			return;
 		}
@@ -700,7 +700,7 @@ PHP_FUNCTION(stomp_send)
 		} 
 		FETCH_STOMP_OBJECT;
 	} else {
-		zval *arg = NULL;
+		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "rSz|a!", &arg, &destination, &msg, &headers) == FAILURE) {
 			return;
 		}
@@ -1196,7 +1196,7 @@ PHP_FUNCTION(stomp_set_read_timeout)
 		}
 		FETCH_STOMP_OBJECT; 
 	} else {
-		zval *arg = NULL;
+		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "rl|l", &arg, &sec, &usec) == FAILURE) {
 			return;
 		}
