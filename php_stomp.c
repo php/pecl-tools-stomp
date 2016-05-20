@@ -56,7 +56,7 @@
 
 #define FRAME_HEADER_FROM_HASHTABLE(h, p)  do { \
 	zval *value, _zv; \
-	zend_string *key, *val; \
+	zend_string *key; \
 	ZEND_HASH_FOREACH_STR_KEY_VAL((p), key, value) { \
 		if (key == NULL) { \
 			php_error_docref(NULL , E_WARNING, "Invalid argument or parameter array"); \
@@ -340,17 +340,6 @@ static void php_destroy_stomp_res(zend_resource *rsrc)
 	stomp_close(stomp);
 } 
 
-static void stomp_object_free_storage(stomp_object_t *intern)
-{
-	zend_object_std_dtor(&intern->std );
-	if (intern->stomp) {
-		stomp_send_disconnect(intern->stomp );
-		stomp_close(intern->stomp);
-	}
-	efree(intern);
-}
-
-	 
 static zend_object *php_stomp_new(zend_class_entry *ce)
 {
 	stomp_object_t *intern;
@@ -682,7 +671,7 @@ PHP_FUNCTION(stomp_close)
 		stomp_close(stomp);
 		i_obj->stomp = NULL;
 	} else {
-		zval *arg = NULL;
+		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "r", &arg) == FAILURE) {
 			return;
 		}
