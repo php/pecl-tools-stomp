@@ -191,12 +191,11 @@ int stomp_writable(stomp_t *stomp)
 int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC)
 {
 	char error[1024];
-	socklen_t        size;
+	socklen_t size;
 	struct timeval tv;
 	int flag = 1;
 
-	if (stomp->host != NULL)
-	{
+	if (stomp->host != NULL) {
 		efree(stomp->host);
 	}
 	stomp->host = (char *) emalloc(strlen(host) + 1);
@@ -628,7 +627,7 @@ stomp_frame_t *stomp_read_frame_ex(stomp_t *stomp, int use_stack)
 			ZVAL_STRING(&value, p2 + 1);
 
 			/* Insert key/value into hash table. */
-			zend_hash_str_add(f->headers, key, strlen(key), &value);
+			zend_hash_str_add(f->headers, key, p2 - key, &value);
 			efree(p);
 		}
 	}

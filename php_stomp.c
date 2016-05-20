@@ -1014,7 +1014,7 @@ PHP_FUNCTION(stomp_read_frame)
 /* }}} */
 
 /* {{{ _php_stomp_transaction */
-static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
+static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd, size_t cmd_len) {
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	zend_string *transaction_id;
@@ -1035,7 +1035,7 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 		FETCH_STOMP_RSRC(stomp, arg);
 	}
 
-	INIT_FRAME_L(frame, cmd, strlen(cmd));
+	INIT_FRAME_L(frame, cmd, cmd_len);
 
 	if (ZSTR_LEN(transaction_id)) {
 		ZVAL_STR(&rv, zend_string_copy(transaction_id));
@@ -1060,7 +1060,7 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
    Start a transaction */
 PHP_FUNCTION(stomp_begin)
 {
-	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "BEGIN");
+	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "BEGIN", sizeof("BEGIN") - 1);
 }
 /* }}} */
 
@@ -1068,7 +1068,7 @@ PHP_FUNCTION(stomp_begin)
    Commit a transaction in progress */
 PHP_FUNCTION(stomp_commit)
 {
-	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "COMMIT");
+	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "COMMIT", sizeof("COMMIT") - 1);
 }
 /* }}} */
 
@@ -1076,7 +1076,7 @@ PHP_FUNCTION(stomp_commit)
    Rollback a transaction in progress */
 PHP_FUNCTION(stomp_abort)
 {
-	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "ABORT");
+	_php_stomp_transaction(INTERNAL_FUNCTION_PARAM_PASSTHRU, "ABORT", sizeof("ABORT") - 1);
 }
 /* }}} */
 
