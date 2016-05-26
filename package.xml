@@ -18,6 +18,12 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>gena01@php.net</email>
         <active>yes</active>
     </lead>
+    <lead>
+        <name>Xinchen Hui</name>
+        <user>laruence</user>
+        <email>laruence@php.net</email>
+        <active>yes</active>
+    </lead>
     <date>2016-05-24</date>
     <version><release>2.0.0</release><api>2.0.0</api></version>
     <stability><release>beta</release><api>beta</api></stability>
