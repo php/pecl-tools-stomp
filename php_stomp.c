@@ -982,7 +982,11 @@ PHP_FUNCTION(stomp_read_frame)
 
 				fcc.initialized = 1;
 				fcc.function_handler = ce->constructor;
+#if (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 0)
 				fcc.calling_scope = EG(scope);
+#else
+				fcc.calling_scope = zend_get_executed_scope();
+#endif
 				fcc.object = Z_OBJ_P(return_value);
 
 				if (zend_call_function(&fci, &fcc ) == FAILURE) {
