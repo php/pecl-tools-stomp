@@ -963,8 +963,10 @@ PHP_FUNCTION(stomp_read_frame)
 				}
 
 				fci.size = sizeof(fci);
+#if (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 0)
 				fci.function_table = &ce->function_table;
 				fci.symbol_table = NULL;
+#endif
 
 				/* PARAMS */
 				fci.param_count = 3;
