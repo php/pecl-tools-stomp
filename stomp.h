@@ -90,7 +90,7 @@ int stomp_select_ex(stomp_t *connection, const long int sec, const long int usec
 void stomp_set_error(stomp_t *stomp, const char *error, int errnum, const char *fmt, ...) ZEND_ATTRIBUTE_PTR_FORMAT(printf, 4, 0);
 void stomp_free_frame(stomp_frame_t *frame);
 
-#define stomp_select(s) stomp_select_ex(s, s->options.read_timeout_sec, s->options.read_timeout_sec)
+#define stomp_select(s) stomp_select_ex(s, s->options.read_timeout_sec, s->options.read_timeout_usec)
 #endif /* _STOMP_H_ */
 
 /*
