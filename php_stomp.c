@@ -967,7 +967,6 @@ PHP_FUNCTION(stomp_read_frame)
 				fci.function_table = &ce->function_table;
 				fci.symbol_table = NULL;
 #endif
-
 				/* PARAMS */
 				fci.param_count = 3;
 				fci.params = (zval*) safe_emalloc(sizeof(zval), 3, 0);

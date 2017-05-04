@@ -24,12 +24,12 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>laruence@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2016-05-24</date>
-    <version><release>2.0.0</release><api>2.0.0</api></version>
-    <stability><release>beta</release><api>beta</api></stability>
+    <date>2017-05-04</date>
+    <version><release>2.0.1</release><api>2.0.1</api></version>
+    <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
 	<notes>
-		- PHP7 Support
+		- PHP7.1 Support
     </notes>
     <contents>
         <dir name="/">
@@ -98,6 +98,15 @@ This extension allows php applications to communicate with any Stomp compliant M
     </extsrcrelease>
 
     <changelog>
+        <release>
+            <version><release>2.0.1</release><api>2.0.1</api></version>
+            <stability><release>stable</release><api>stable</api></stability>
+            <license uri="http://www.php.net/license">PHP License</license>
+            <date>2017-05-04</date>
+            <notes>
+				- PHP7.1 Support
+            </notes>
+        </release>
         <release>
             <version><release>2.0.0</release><api>2.0.0</api></version>
             <stability><release>beta</release><api>beta</api></stability>
