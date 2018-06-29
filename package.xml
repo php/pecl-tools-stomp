@@ -24,12 +24,19 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>laruence@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2017-05-04</date>
-    <version><release>2.0.1</release><api>2.0.1</api></version>
+    <lead>
+        <name>Remi Collet</name>
+        <user>remi</user>
+        <email>remi@php.net</email>
+        <active>yes</active>
+    </lead>
+    <date>2018-06-29</date>
+    <version><release>2.0.2</release><api>2.0.1</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
 	<notes>
-		- PHP7.1 Support
+		- Fix compatibility with PHP 7.3
+		- Fix -Wformat issues
     </notes>
     <contents>
         <dir name="/">
