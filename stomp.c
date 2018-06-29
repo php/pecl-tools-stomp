@@ -209,7 +209,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 
 	stomp->fd = php_network_connect_socket_to_host(stomp->host, stomp->port, SOCK_STREAM, 0, &tv, NULL, NULL, NULL, 0, 0);
 	if (stomp->fd == -1) {
-		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
+		snprintf(error, sizeof(error), "Unable to connect to %s:%d", stomp->host, stomp->port);
 		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
 		return 0;
 	}
@@ -257,7 +257,7 @@ int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_D
 #endif
 		return 1;
 	} else {
-		snprintf(error, sizeof(error), "Unable to connect to %s:%ld", stomp->host, stomp->port);
+		snprintf(error, sizeof(error), "Unable to connect to %s:%d", stomp->host, stomp->port);
 		stomp_set_error(stomp, error, errno, "%s", strerror(errno));
 		return 0;
 	}

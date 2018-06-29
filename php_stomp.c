@@ -75,7 +75,7 @@
 	efree(frame.headers);
 
 #define THROW_STOMP_EXCEPTION(excobj, errnum, error) \
-	ZVAL_OBJ(excobj, zend_throw_exception_ex(stomp_ce_exception, errnum , error));
+	ZVAL_OBJ(excobj, zend_throw_exception_ex(stomp_ce_exception, errnum, "%s", error));
 
 #define STOMP_ERROR(errno, msg) \
 	STOMP_G(error_no) = errno; \
@@ -100,6 +100,12 @@
             zend_update_property_string(stomp_ce_exception, object, "details", sizeof("details")-1, (char *) details ); \
         } \
     }
+
+#if PHP_VERSION_ID < 70300
+#define STOMP_URL_STR(a) (a)
+#else
+#define STOMP_URL_STR(a) ZSTR_VAL(a)
+#endif
 
 static int le_stomp;
 static zend_object_handlers stomp_obj_handlers;
@@ -484,7 +490,7 @@ PHP_FUNCTION(stomp_connect)
 	zend_string_release(broker);
 
 	if (url_parts->scheme) {
-		if (strcmp(url_parts->scheme, "ssl") == 0) {
+		if (strcmp(STOMP_URL_STR(url_parts->scheme), "ssl") == 0) {
 #if HAVE_STOMP_SSL
 			use_ssl = 1;
 #else
@@ -492,7 +498,7 @@ PHP_FUNCTION(stomp_connect)
 			php_url_free(url_parts);
 			return;
 #endif        
-		} else if (strcmp(url_parts->scheme, "tcp") != 0) {
+		} else if (strcmp(STOMP_URL_STR(url_parts->scheme), "tcp") != 0) {
 			STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI_SCHEME);
 			php_url_free(url_parts);
 			return;
@@ -510,7 +516,7 @@ PHP_FUNCTION(stomp_connect)
 	stomp->options.connect_timeout_sec  = STOMP_G(connection_timeout_sec);
 	stomp->options.connect_timeout_usec = STOMP_G(connection_timeout_usec);
 
-	stomp->status = stomp_connect(stomp, url_parts->host, url_parts->port ? url_parts->port : 61613 );
+	stomp->status = stomp_connect(stomp, STOMP_URL_STR(url_parts->host), url_parts->port ? url_parts->port : 61613 );
 	php_url_free(url_parts);
 
 	if (stomp->status) {
@@ -908,7 +914,7 @@ PHP_FUNCTION(stomp_read_frame)
 	if (class_name && ZSTR_LEN(class_name)) {
 		ce = zend_fetch_class(class_name, ZEND_FETCH_CLASS_AUTO);
 		if (!ce) {
-			php_error_docref(NULL , E_WARNING, "Could not find class '%s'", class_name);
+			php_error_docref(NULL , E_WARNING, "Could not find class '%s'", ZSTR_VAL(class_name));
 			ce = stomp_ce_frame;
 		}
 	} else if (stomp_object) {
@@ -979,7 +985,9 @@ PHP_FUNCTION(stomp_read_frame)
 				fci.retval = &retval;
 				fci.no_separation = 1;
 
+#if PHP_VERSION_ID < 70300
 				fcc.initialized = 1;
+#endif
 				fcc.function_handler = ce->constructor;
 #if (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 0)
 				fcc.calling_scope = EG(scope);
