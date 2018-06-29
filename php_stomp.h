@@ -29,7 +29,7 @@ typedef struct _stomp_object {
 } stomp_object_t; 
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
-#define PHP_STOMP_VERSION                       "2.0.2"
+#define PHP_STOMP_VERSION                       "2.0.3-dev"
 
 #define PHP_STOMP_RES_NAME                      "stomp connection"
 
