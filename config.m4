@@ -1,4 +1,3 @@
-dnl $Id$
 dnl config.m4 for extension stomp
 
 PHP_ARG_ENABLE(stomp, whether to enable stomp support,
