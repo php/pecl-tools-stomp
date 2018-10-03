@@ -9,4 +9,3 @@ if (PHP_STOMP != "no") {
 
 	EXTENSION("stomp", "stomp.c php_stomp.c");
 }
-

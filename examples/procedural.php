@@ -21,4 +21,3 @@ if($stomp = stomp_connect($broker)) {
 
     stomp_close($stomp);
 }
-

@@ -21,4 +21,3 @@ try {
 } catch(StompException $e) {
     echo $e->getMessage();
 }
-
