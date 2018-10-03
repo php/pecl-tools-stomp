@@ -239,7 +239,7 @@ This extension allows php applications to communicate with any Stomp compliant M
 			</notes>
 		</release>
 		<release>
-    		<version><release>1.0.0</release><api>1.0.0</api></version>
+			<version><release>1.0.0</release><api>1.0.0</api></version>
 			<stability><release>stable</release><api>stable</api></stability>
 			<license uri="http://www.php.net/license">PHP License</license>
 			<date>2010-02-11</date>
