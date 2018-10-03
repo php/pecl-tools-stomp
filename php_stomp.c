@@ -83,7 +83,7 @@
 	STOMP_G(error_msg) = estrdup(msg); \
 	if (stomp_object) { \
 		zend_throw_exception_ex(stomp_ce_exception, errno , msg); \
-	} 
+	}
 
 #define STOMP_ERROR_DETAILS(errno, msg, details) \
 	STOMP_G(error_no) = errno; \
@@ -157,7 +157,7 @@ ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(stomp_readframe_args, 0, 0, 1)
-ZEND_ARG_INFO(0, link)	
+ZEND_ARG_INFO(0, link)
 ZEND_ARG_INFO(0, class_name)
 ZEND_END_ARG_INFO()
 
@@ -213,7 +213,7 @@ ZEND_BEGIN_ARG_INFO_EX(stomp_frame_construct_args, 0, 0, 0)
 ZEND_ARG_INFO(0, command)
 ZEND_ARG_ARRAY_INFO(0, headers, 1)
 ZEND_ARG_INFO(0, body)
-ZEND_END_ARG_INFO()    
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /* {{{ stomp_functions */
@@ -267,7 +267,7 @@ static zend_function_entry stomp_frame_methods[] = {
 	PHP_ME(stompframe, __construct, stomp_frame_construct_args, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
-/* }}} */ 
+/* }}} */
 
 /* {{{ stomp_exception_methods[] */
 static zend_function_entry stomp_exception_methods[] = {
@@ -283,7 +283,7 @@ zend_module_entry stomp_module_entry = {
 	stomp_functions,
 	PHP_MINIT(stomp),
 	PHP_MSHUTDOWN(stomp),
-	PHP_RINIT(stomp),    
+	PHP_RINIT(stomp),
 	PHP_RSHUTDOWN(stomp),
 	PHP_MINFO(stomp),
 	PHP_STOMP_VERSION,
@@ -330,9 +330,9 @@ ZEND_GET_MODULE(stomp)
 /* {{{ constructor/destructor */
 static void stomp_send_disconnect(stomp_t *stomp)
 {
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	INIT_FRAME(frame, "DISCONNECT");
-	
+
 	stomp_send(stomp, &frame );
 	CLEAR_FRAME(frame);
 }
@@ -342,7 +342,7 @@ static void php_destroy_stomp_res(zend_resource *rsrc)
 	stomp_t *stomp = (stomp_t *) rsrc->ptr;
 	stomp_send_disconnect(stomp );
 	stomp_close(stomp);
-} 
+}
 
 static zend_object *php_stomp_new(zend_class_entry *ce)
 {
@@ -350,7 +350,7 @@ static zend_object *php_stomp_new(zend_class_entry *ce)
 
 	intern = (stomp_object_t *) ecalloc(1, sizeof(stomp_object_t) + zend_object_properties_size(ce));
 	intern->stomp = NULL;
-	
+
 	zend_object_std_init(&intern->std, ce );
 
 	intern->std.handlers = &stomp_obj_handlers;
@@ -381,7 +381,7 @@ PHP_MINIT_FUNCTION(stomp)
 	/* Properties */
 	zend_declare_property_null(stomp_ce_frame, "command", sizeof("command")-1, ZEND_ACC_PUBLIC );
 	zend_declare_property_null(stomp_ce_frame, "headers", sizeof("headers")-1, ZEND_ACC_PUBLIC );
-	zend_declare_property_null(stomp_ce_frame, "body", sizeof("body")-1, ZEND_ACC_PUBLIC ); 
+	zend_declare_property_null(stomp_ce_frame, "body", sizeof("body")-1, ZEND_ACC_PUBLIC );
 
 	/* Register StompException class */
 	INIT_CLASS_ENTRY(ce, PHP_STOMP_EXCEPTION_CLASSNAME, stomp_exception_methods);
@@ -399,7 +399,7 @@ PHP_MINIT_FUNCTION(stomp)
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION */
 PHP_MSHUTDOWN_FUNCTION(stomp)
-{ 
+{
 	/* Unregister INI entries */
 	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
@@ -443,9 +443,9 @@ PHP_MINFO_FUNCTION(stomp)
 }
 /* }}} */
 
-/* {{{ proto string stomp_version() 
+/* {{{ proto string stomp_version()
    Get stomp extension version */
-PHP_FUNCTION(stomp_version) 
+PHP_FUNCTION(stomp_version)
 {
 	RETURN_STRINGL(PHP_STOMP_VERSION, sizeof(PHP_STOMP_VERSION)-1);
 }
@@ -461,9 +461,9 @@ PHP_FUNCTION(stomp_connect)
 	zend_string *broker = NULL, *username = NULL, *password = NULL;
 	php_url *url_parts;
 
-#ifdef HAVE_STOMP_SSL    
+#ifdef HAVE_STOMP_SSL
 	int use_ssl = 0;
-#endif    
+#endif
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() , "|SSSa!", &broker, &username, &password, &headers) == FAILURE) {
 		return;
@@ -478,7 +478,7 @@ PHP_FUNCTION(stomp_connect)
 	}
 
 	url_parts = php_url_parse_ex(ZSTR_VAL(broker), ZSTR_LEN(broker));
-	
+
 	if (!url_parts || !url_parts->host) {
 		STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI);
 		zend_string_release(broker);
@@ -495,7 +495,7 @@ PHP_FUNCTION(stomp_connect)
 			STOMP_ERROR(0, "SSL DISABLED");
 			php_url_free(url_parts);
 			return;
-#endif        
+#endif
 		} else if (strcmp(STOMP_URL_STR(url_parts->scheme), "tcp") != 0) {
 			STOMP_ERROR(0, PHP_STOMP_ERR_INVALID_BROKER_URI_SCHEME);
 			php_url_free(url_parts);
@@ -507,7 +507,7 @@ PHP_FUNCTION(stomp_connect)
 
 #if HAVE_STOMP_SSL
 	stomp->options.use_ssl = use_ssl;
-#endif 
+#endif
 
 	stomp->options.read_timeout_sec     = STOMP_G(read_timeout_sec);
 	stomp->options.read_timeout_usec    = STOMP_G(read_timeout_usec);
@@ -522,7 +522,7 @@ PHP_FUNCTION(stomp_connect)
 		stomp_frame_t *res;
 		stomp_frame_t frame = {0};
 		int send_status;
- 
+
 		INIT_FRAME(frame, "CONNECT");
 		if (!username) {
 			username = zend_string_init(STOMP_G(default_username), strlen(STOMP_G(default_username)), 0);
@@ -548,7 +548,7 @@ PHP_FUNCTION(stomp_connect)
 			ZVAL_STR(&rv, zend_string_copy(password));
 			zend_hash_str_add(frame.headers, "passcode", sizeof("passcode"), &rv);
 		}
- 
+
 		zend_string_release(username);
 		zend_string_release(password);
 
@@ -607,7 +607,7 @@ PHP_FUNCTION(stomp_connect)
 				i_obj->stomp = stomp;
 				RETURN_TRUE;
 			}
-		} 
+		}
 	} else {
 		STOMP_ERROR_DETAILS(0, stomp->error, stomp->error_details);
 	}
@@ -617,9 +617,9 @@ PHP_FUNCTION(stomp_connect)
 }
 /* }}} */
 
-/* {{{ proto string stomp_connect_error() 
+/* {{{ proto string stomp_connect_error()
    Get the last connection error */
-PHP_FUNCTION(stomp_connect_error) 
+PHP_FUNCTION(stomp_connect_error)
 {
 	if (STOMP_G(error_msg)) {
 		RETURN_STRING(STOMP_G(error_msg));
@@ -629,7 +629,7 @@ PHP_FUNCTION(stomp_connect_error)
 }
 /* }}} */
 
-/* {{{ proto string Stomp::getSessionId() 
+/* {{{ proto string Stomp::getSessionId()
    Get the current stomp session ID */
 PHP_FUNCTION(stomp_get_session_id)
 {
@@ -695,13 +695,13 @@ PHP_FUNCTION(stomp_send)
 	stomp_t *stomp = NULL;
 	zend_string *destination;
 	zval *msg, *headers = NULL, rv;
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	int success = 0;
 
 	if (stomp_object) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "Sz|a!", &destination, &msg, &headers) == FAILURE) {
 			return;
-		} 
+		}
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
@@ -718,7 +718,7 @@ PHP_FUNCTION(stomp_send)
 	}
 
 	INIT_FRAME(frame, "SEND");
-	
+
 	/* Translate a PHP array to a stomp_header array */
 	if (NULL != headers) {
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
@@ -727,7 +727,7 @@ PHP_FUNCTION(stomp_send)
 	/* Add the destination */
 	ZVAL_STR(&rv, zend_string_copy(destination));
 	zend_hash_str_add(frame.headers, "destination", sizeof("destination") - 1, &rv);
-	 
+
 	if (Z_TYPE_P(msg) == IS_STRING) {
 		frame.body = Z_STRVAL_P(msg);
 		frame.body_length = Z_STRLEN_P(msg);
@@ -770,7 +770,7 @@ PHP_FUNCTION(stomp_subscribe)
 	stomp_t *stomp = NULL;
 	zend_string *destination;
 	zval *headers = NULL, rv;
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	int success = 0;
 
 	if (stomp_object) {
@@ -793,7 +793,7 @@ PHP_FUNCTION(stomp_subscribe)
 	}
 
 	INIT_FRAME(frame, "SUBSCRIBE");
-	 
+
 	/* Translate a PHP array to a stomp_header array */
 	if (NULL != headers) {
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
@@ -824,7 +824,7 @@ PHP_FUNCTION(stomp_unsubscribe)
 	stomp_t *stomp = NULL;
 	zend_string *destination;
 	zval *headers = NULL, rv;
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	int success = 0;
 
 	if (stomp_object) {
@@ -847,7 +847,7 @@ PHP_FUNCTION(stomp_unsubscribe)
 	}
 
 	INIT_FRAME(frame, "UNSUBSCRIBE");
-	 
+
 	/* Translate a PHP array to a stomp_header array */
 	if (NULL != headers) {
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
@@ -866,9 +866,9 @@ PHP_FUNCTION(stomp_unsubscribe)
 }
 /* }}} */
 
-/* {{{ proto boolean Stomp::hasFrame() 
+/* {{{ proto boolean Stomp::hasFrame()
    Indicate whether or not there is a frame ready to read */
-PHP_FUNCTION(stomp_has_frame) 
+PHP_FUNCTION(stomp_has_frame)
 {
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
@@ -886,7 +886,7 @@ PHP_FUNCTION(stomp_has_frame)
 }
 /* }}} */
 
-/* {{{ proto StompFrame Stomp::readFrame() 
+/* {{{ proto StompFrame Stomp::readFrame()
    Read the next frame */
 PHP_FUNCTION(stomp_read_frame)
 {
@@ -947,7 +947,7 @@ PHP_FUNCTION(stomp_read_frame)
 				zend_hash_update(Z_ARRVAL(headers), key, val);
 			} ZEND_HASH_FOREACH_END();
 		}
-		
+
 		if (ce) {
 			zend_fcall_info fci;
 			zend_fcall_info_cache fcc;
@@ -1029,14 +1029,14 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd, size
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	zend_string *transaction_id;
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	int success = 0;
 	zval *headers = NULL, rv;
 
 	if (stomp_object) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "S|a", &transaction_id, &headers) == FAILURE) {
 			return;
-		} 
+		}
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
@@ -1091,19 +1091,19 @@ PHP_FUNCTION(stomp_abort)
 }
 /* }}} */
 
-/* {{{ _php_stomp_acknowledgment 
+/* {{{ _php_stomp_acknowledgment
  */
 static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 	zval *stomp_object = getThis();
 	zval *msg, *headers = NULL;
 	stomp_t *stomp = NULL;
-	stomp_frame_t frame = {0}; 
+	stomp_frame_t frame = {0};
 	int success = 0;
 
 	if (stomp_object) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "z|a!", &msg, &headers) == FAILURE) {
 			return;
-		} 
+		}
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
@@ -1135,7 +1135,7 @@ static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 		CLEAR_FRAME(frame);
 		RETURN_FALSE;
 	}
-	
+
 	if (stomp_send(stomp, &frame ) > 0) {
 		success = stomp_valid_receipt(stomp, &frame);
 	}
@@ -1161,7 +1161,7 @@ PHP_FUNCTION(stomp_nack)
 }
 /* }}} */
 
-/* {{{ proto string Stomp::error() 
+/* {{{ proto string Stomp::error()
    Get the last error message */
 PHP_FUNCTION(stomp_error)
 {
@@ -1205,7 +1205,7 @@ PHP_FUNCTION(stomp_set_read_timeout)
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "l|l", &sec, &usec) == FAILURE) {
 			return;
 		}
-		FETCH_STOMP_OBJECT; 
+		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "rl|l", &arg, &sec, &usec) == FAILURE) {
@@ -1219,14 +1219,14 @@ PHP_FUNCTION(stomp_set_read_timeout)
 }
 /* }}} */
 
-/* {{{ proto array Stomp::getTimeout() 
+/* {{{ proto array Stomp::getTimeout()
    Get the timeout */
 PHP_FUNCTION(stomp_get_read_timeout)
 {
 	zval *stomp_object = getThis();
 	stomp_t *stomp = NULL;
 	if (stomp_object) {
-		FETCH_STOMP_OBJECT; 
+		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
 		if (zend_parse_parameters(ZEND_NUM_ARGS() , "r", &arg) == FAILURE) {
@@ -1270,7 +1270,7 @@ PHP_METHOD(stompframe, __construct)
    Get error details */
 PHP_METHOD(stompexception, getDetails)
 {
-	zval *object = getThis();	
+	zval *object = getThis();
 	zval rv, *details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1, &rv);
 	RETURN_STR(zval_get_string(details));
 }

@@ -16,7 +16,7 @@ if test "$PHP_STOMP" != "no"; then
             [
             AC_DEFINE(HAVE_STOMP_SSL,1,[ ])
             ], [
-            AC_MSG_ERROR([OpenSSL libraries not found. 
+            AC_MSG_ERROR([OpenSSL libraries not found.
 
                 Check the path given to --with-openssl-dir and output in config.log)
             ])

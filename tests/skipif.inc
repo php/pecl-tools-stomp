@@ -2,7 +2,7 @@
 include __DIR__ . "/config.inc";
 
 if (!extension_loaded("stomp")) {
-	print "skip"; 
+	print "skip";
 }
 if (isset($require_connection) && $require_connection) {
     $stomp = stomp_connect(STOMP_ADDRESS);

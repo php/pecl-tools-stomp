@@ -1,5 +1,5 @@
 - Add the ability to connect to a network of brokers
     (Cf: http://activemq.apache.org/networks-of-brokers.html)
 - Add Stomp 1.1 full support
-- Verify if we need to call recv with MSG_PEEK for the newline char 
+- Verify if we need to call recv with MSG_PEEK for the newline char
   or if the current implementation is enough (cf bug #59217)

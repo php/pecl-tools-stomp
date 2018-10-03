@@ -1,12 +1,12 @@
 --TEST--
 Test stomp_close()
 --SKIPIF--
-<?php 
+<?php
 $require_connection = true;
 include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
-<?php 
+<?php
 include dirname(__DIR__) . "/config.inc";
 $link = stomp_connect(STOMP_ADDRESS);
 if($link) echo "success" . PHP_EOL;

@@ -6,7 +6,7 @@ $require_connection = true;
 include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
-<?php 
+<?php
 
 include dirname(__DIR__) . "/config.inc";
 

@@ -40,7 +40,7 @@ typedef struct _stomp_options {
 	long read_timeout_usec;
 #if HAVE_STOMP_SSL
 	int use_ssl;
-#endif    
+#endif
 } stomp_options_t;
 
 typedef struct _stomp_frame {
@@ -57,7 +57,7 @@ typedef struct _stomp_frame_stack {
 } stomp_frame_stack_t;
 
 typedef struct _stomp {
-	php_socket_t fd;    
+	php_socket_t fd;
 	php_sockaddr_storage localaddr;
 	stomp_options_t options;
 	char *host;

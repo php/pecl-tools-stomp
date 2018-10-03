@@ -1,7 +1,7 @@
 stomp
 =====
 
-This extension allows php applications to communicate with any Stomp compliant Message Broker(s) through easy object 
+This extension allows php applications to communicate with any Stomp compliant Message Broker(s) through easy object
 oriented and procedural interfaces.
 
 This extension currently implements STOMP 1.0 protocol: https://stomp.github.io/stomp-specification-1.0.html

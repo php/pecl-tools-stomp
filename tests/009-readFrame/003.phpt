@@ -1,12 +1,12 @@
 --TEST--
-Test stomp::readFrame() - custom frame class 
+Test stomp::readFrame() - custom frame class
 --SKIPIF--
 <?php
 $require_connection = true;
 include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
-<?php 
+<?php
 
 include dirname(__DIR__) . "/config.inc";
 

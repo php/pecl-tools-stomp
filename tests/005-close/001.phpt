@@ -1,11 +1,11 @@
 --TEST--
 Test stomp_close() - tests parameters
 --SKIPIF--
-<?php 
+<?php
 include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
-<?php 
+<?php
 stomp_close(null);
 ?>
 --EXPECTF--

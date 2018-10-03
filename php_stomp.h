@@ -24,7 +24,7 @@
 typedef struct _stomp_object {
 	stomp_t *stomp;
 	zend_object std;
-} stomp_object_t; 
+} stomp_object_t;
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
 #define PHP_STOMP_VERSION                       "2.0.3-dev"
@@ -104,7 +104,7 @@ ZEND_END_MODULE_GLOBALS(stomp)
 #define STOMP_G(v) TSRMG(stomp_globals_id, zend_stomp_globals *, v)
 #else
 #define STOMP_G(v) (stomp_globals.v)
-#endif 
+#endif
 
 #endif /* PHP_STOMP_H */
 

@@ -4,7 +4,7 @@ class Stomp {
 
     /**
      * Connect to server
-     * 
+     *
      * @param string $broker The broker URI
      * @param string $username The username
      * @param string $password The password
@@ -15,7 +15,7 @@ class Stomp {
 
     /**
      * Get the current stomp session ID
-     * 
+     *
      * @return string stomp session ID if it exists, or FALSE otherwise
      */
     public function getSessionId() {
@@ -24,28 +24,28 @@ class Stomp {
     /**
      * Close stomp connection
      *
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function disconnect() {
     }
 
-    /** 
+    /**
      * Sends a message to a destination in the messaging system
-     * 
-     * @param string $destination indicates where to send the message 
+     *
+     * @param string $destination indicates where to send the message
      * @param string|StompFrame $msg message to be sent
      * @param array $headers additional headers (example: receipt).
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function send($destination, $msg, array $headers = array()) {
     }
 
     /**
      * Register to listen to a given destination
-     * 
-     * @param string $destination indicates which destination to subscribe to 
+     *
+     * @param string $destination indicates which destination to subscribe to
      * @param array $headers additional headers (example: receipt).
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function subscribe($destination, array $headers = array()) {
     }
@@ -55,14 +55,14 @@ class Stomp {
      *
      * @param string $destination indicates which subscription to remove
      * @param array $headers additional headers (example: receipt).
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function unsubscribe($destination, array $headers = array()) {
     }
 
     /**
      * Indicate whether or not there is a frame ready to read
-     * 
+     *
      * @return boolean TRUE if there is one, or FALSE otherwise
      */
     public function hasFrame() {
@@ -81,7 +81,7 @@ class Stomp {
      * Start a transaction
      *
      * @param string $transaction_id transaction id
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function begin($transaction_id) {
     }
@@ -90,26 +90,26 @@ class Stomp {
      * Commit a transaction in progress
      *
      * @param string $transaction_id transaction id
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
-    public function commit($transaction_id) { 
+    public function commit($transaction_id) {
     }
 
     /**
      * Roll back a transaction in progress
      *
      * @param string $transaction_id transaction id
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function abort($transaction_id) {
     }
 
     /**
      * Acknowledge consumption of a message from a subscription using client acknowledgment
-     * 
+     *
      * @param string|StompFrame $msg message/messageId to be acknowledged
      * @param array $headers additional headers (example: receipt).
-     * @return boolean TRUE on success, or FALSE on failure 
+     * @return boolean TRUE on success, or FALSE on failure
      */
     public function ack($msg, array $headers = array()) {
     }
@@ -124,7 +124,7 @@ class Stomp {
 
     /**
      * Set timeout
-     * 
+     *
      * @param int $seconds the seconds part of the timeout to be set
      * @param int $microseconds the microseconds part of the timeout to be set
      * @return void
@@ -134,16 +134,16 @@ class Stomp {
 
     /**
      * Get timeout
-     * 
+     *
      * @return array Array with timeout informations
      */
     public function getTimeout() {
-    }   
+    }
 
 }
 
 class StompFrame {
-    
+
     /**
      * Frame Command
      * @var String
@@ -164,11 +164,11 @@ class StompFrame {
 }
 
 class StompException extends Exception {
-    
+
     /**
      * Get the stomp server error details
      *
-     * @return string 
+     * @return string
      */
     public function getDetails() {
     }

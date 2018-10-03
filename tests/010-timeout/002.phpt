@@ -5,11 +5,11 @@ stomp.default_read_timeout_sec=5
 stomp.default_read_timeout_usec=5
 --SKIPIF--
 <?php
-    if (!extension_loaded("stomp")) print "skip"; 
+    if (!extension_loaded("stomp")) print "skip";
     if (!stomp_connect()) print "skip";
 ?>
 --FILE--
-<?php 
+<?php
 $link = stomp_connect();
 
 // First test, read from ini variables, expected to return 5.5

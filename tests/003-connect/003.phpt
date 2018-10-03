@@ -5,7 +5,7 @@ Test stomp_connect() - Test error on CONNECT
 include "../skipif.inc"
 ?>
 --FILE--
-<?php 
+<?php
 try {
 	$stomp = new Stomp('tcp://localhost', 'anotpresentusername1234');
 } catch (Exception $e) {
