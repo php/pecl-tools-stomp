@@ -2,7 +2,7 @@
 Test stomp_connect() - Test error on CONNECT
 --SKIPIF--
 <?php
-include "../skipif.inc"
+include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php

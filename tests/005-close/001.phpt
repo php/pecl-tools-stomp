@@ -6,7 +6,11 @@ include dirname(__DIR__) . "/skipif.inc";
 ?>
 --FILE--
 <?php
-stomp_close(null);
+try {
+	stomp_close(null);
+} catch (TypeError $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
 ?>
 --EXPECTF--
-Warning: stomp_close() expects parameter 1 to be resource, null given in %s on line %d
+%stomp_close()%s1%s null %s

@@ -95,7 +95,7 @@
 		zval _object, *object = &_object; \
 		THROW_STOMP_EXCEPTION(object, errno, msg) \
         if (details) { \
-            zend_update_property_string(stomp_ce_exception, object, "details", sizeof("details")-1, (char *) details ); \
+            zend_update_property_string(stomp_ce_exception, OBJ_FOR_PROP(object), "details", sizeof("details")-1, (char *) details ); \
         } \
     }
 
@@ -103,6 +103,12 @@
 #define STOMP_URL_STR(a) (a)
 #else
 #define STOMP_URL_STR(a) ZSTR_VAL(a)
+#endif
+
+#if PHP_VERSION_ID < 80000
+#define OBJ_FOR_PROP(zv) (zv)
+#else
+#define OBJ_FOR_PROP(zv) Z_OBJ_P(zv)
 #endif
 
 static int le_stomp;
@@ -562,7 +568,7 @@ PHP_FUNCTION(stomp_connect)
 			zval excobj;
 			THROW_STOMP_EXCEPTION(&excobj, stomp->errnum, stomp->error);
 			if (stomp->error_details) {
-				zend_update_property_string(stomp_ce_exception, &excobj, "details", sizeof("details")-1, stomp->error_details );
+				zend_update_property_string(stomp_ce_exception, OBJ_FOR_PROP(&excobj), "details", sizeof("details")-1, stomp->error_details );
 			}
 			return;
 		}
@@ -576,7 +582,7 @@ PHP_FUNCTION(stomp_connect)
 			if ((error_msg = zend_hash_str_find(res->headers, ZEND_STRL("message"))) != NULL) {
 				THROW_STOMP_EXCEPTION(&excobj, 0, ZSTR_VAL(Z_STR_P(error_msg)));
 				if (res->body) {
-					zend_update_property_string(stomp_ce_exception, &excobj, "details", sizeof("details")-1, (char *) res->body );
+					zend_update_property_string(stomp_ce_exception, OBJ_FOR_PROP(&excobj), "details", sizeof("details")-1, (char *) res->body );
 				}
 			}
 			stomp_free_frame(res);
@@ -733,17 +739,17 @@ PHP_FUNCTION(stomp_send)
 		frame.body_length = Z_STRLEN_P(msg);
 	} else if (Z_TYPE_P(msg) == IS_OBJECT && instanceof_function(Z_OBJCE_P(msg), stomp_ce_frame )) {
 		zval *frame_obj_prop = NULL;
-		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "command", sizeof("command")-1, 1, &rv);
+		frame_obj_prop = zend_read_property(stomp_ce_frame, OBJ_FOR_PROP(msg), "command", sizeof("command")-1, 1, &rv);
 		if (Z_TYPE_P(frame_obj_prop) == IS_STRING) {
 			frame.command = Z_STRVAL_P(frame_obj_prop);
 			frame.command_length = Z_STRLEN_P(frame_obj_prop);
 		}
-		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "body", sizeof("body")-1, 1, &rv);
+		frame_obj_prop = zend_read_property(stomp_ce_frame, OBJ_FOR_PROP(msg), "body", sizeof("body")-1, 1, &rv);
 		if (Z_TYPE_P(frame_obj_prop) == IS_STRING) {
 			frame.body = Z_STRVAL_P(frame_obj_prop);
 			frame.body_length = Z_STRLEN_P(frame_obj_prop);
 		}
-		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1, &rv);
+		frame_obj_prop = zend_read_property(stomp_ce_frame, OBJ_FOR_PROP(msg), "headers", sizeof("headers")-1, 1, &rv);
 		if (Z_TYPE_P(frame_obj_prop) == IS_ARRAY) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
 		}
@@ -928,7 +934,7 @@ PHP_FUNCTION(stomp_read_frame)
 				zval excobj;
 				THROW_STOMP_EXCEPTION(&excobj, 0, Z_STRVAL_P(error_msg));
 				if (res->body) {
-					zend_update_property_string(stomp_ce_exception, &excobj, ZEND_STRL("details"), (char *)res->body );
+					zend_update_property_string(stomp_ce_exception, OBJ_FOR_PROP(&excobj), ZEND_STRL("details"), (char *)res->body );
 				}
 				stomp_free_frame(res);
 				RETURN_FALSE;
@@ -966,10 +972,11 @@ PHP_FUNCTION(stomp_read_frame)
 					ZVAL_NULL(&body);
 				}
 
+				memset(&fci, 0, sizeof(fci));
+				memset(&fcc, 0, sizeof(fcc));
 				fci.size = sizeof(fci);
 #if (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 0)
 				fci.function_table = &ce->function_table;
-				fci.symbol_table = NULL;
 #endif
 				/* PARAMS */
 				fci.param_count = 3;
@@ -981,8 +988,9 @@ PHP_FUNCTION(stomp_read_frame)
 				ZVAL_UNDEF(&fci.function_name);
 				fci.object = Z_OBJ_P(return_value);
 				fci.retval = &retval;
+#if PHP_VERSION_ID < 80000
 				fci.no_separation = 1;
-
+#endif
 #if PHP_VERSION_ID < 70300
 				fcc.initialized = 1;
 #endif
@@ -995,7 +1003,7 @@ PHP_FUNCTION(stomp_read_frame)
 				fcc.object = Z_OBJ_P(return_value);
 
 				if (zend_call_function(&fci, &fcc ) == FAILURE) {
-					zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 , "Could not execute %s::%s()", ZSTR_VAL(ce->name), ZSTR_VAL(ce->constructor->common.function_name));
+					zend_throw_exception_ex(zend_exception_get_default(), 0 , "Could not execute %s::%s()", ZSTR_VAL(ce->name), ZSTR_VAL(ce->constructor->common.function_name));
 				} else {
 					zval_ptr_dtor(&retval);
 				}
@@ -1125,7 +1133,7 @@ static void _php_stomp_acknowledgment(INTERNAL_FUNCTION_PARAMETERS, char *cmd) {
 	} else if (Z_TYPE_P(msg) == IS_OBJECT && instanceof_function(Z_OBJCE_P(msg), stomp_ce_frame )) {
 		zval *frame_obj_prop, rv;
 
-		frame_obj_prop = zend_read_property(stomp_ce_frame, msg, "headers", sizeof("headers")-1, 1, &rv);
+		frame_obj_prop = zend_read_property(stomp_ce_frame, OBJ_FOR_PROP(msg), "headers", sizeof("headers")-1, 1, &rv);
 		if (Z_TYPE_P(frame_obj_prop) == IS_ARRAY) {
 			FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(frame_obj_prop));
 		}
@@ -1255,13 +1263,13 @@ PHP_METHOD(stompframe, __construct)
 	}
 
 	if (command_length > 0) {
-		zend_update_property_stringl(stomp_ce_frame, object, "command", sizeof("command")-1, command, command_length );
+		zend_update_property_stringl(stomp_ce_frame, OBJ_FOR_PROP(object), "command", sizeof("command")-1, command, command_length );
 	}
 	if (headers) {
-		zend_update_property(stomp_ce_frame, object, "headers", sizeof("headers")-1, headers );
+		zend_update_property(stomp_ce_frame, OBJ_FOR_PROP(object), "headers", sizeof("headers")-1, headers );
 	}
 	if (body_length > 0) {
-		zend_update_property_stringl(stomp_ce_frame, object, "body", sizeof("body")-1, body, body_length );
+		zend_update_property_stringl(stomp_ce_frame, OBJ_FOR_PROP(object), "body", sizeof("body")-1, body, body_length );
 	}
 }
 /* }}} */
@@ -1271,7 +1279,7 @@ PHP_METHOD(stompframe, __construct)
 PHP_METHOD(stompexception, getDetails)
 {
 	zval *object = getThis();
-	zval rv, *details = zend_read_property(stomp_ce_exception, object, "details", sizeof("details")-1, 1, &rv);
+	zval rv, *details = zend_read_property(stomp_ce_exception, OBJ_FOR_PROP(object), "details", sizeof("details")-1, 1, &rv);
 	RETURN_STR(zval_get_string(details));
 }
 /* }}} */

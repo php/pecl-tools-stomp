@@ -34,7 +34,7 @@ extern zend_class_entry *stomp_ce_exception;
 
 /* {{{ DEBUG */
 #if PHP_DEBUG
-static void print_stomp_frame(stomp_frame_t *frame TSRMLS_DC) {
+static void print_stomp_frame(stomp_frame_t *frame) {
 	php_printf("------ START FRAME ------\n");
 	php_printf("%s\n", frame->command);
 	/* Headers */
@@ -186,7 +186,7 @@ int stomp_writable(stomp_t *stomp)
 
 /* {{{ stomp_connect
  */
-int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC)
+int stomp_connect(stomp_t *stomp, const char *host, unsigned short port)
 {
 	char error[1024];
 	socklen_t size;
@@ -297,7 +297,7 @@ void stomp_close(stomp_t *stomp)
 
 /* {{{ stomp_send
  */
-int stomp_send(stomp_t *stomp, stomp_frame_t *frame TSRMLS_DC)
+int stomp_send(stomp_t *stomp, stomp_frame_t *frame)
 {
 	smart_str buf = {0};
 
