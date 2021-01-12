@@ -1,7 +1,19 @@
 language: php
 
+dist: bionic
+language: c
+os: linux
+addons:
+  apt:
+    packages:
+        - rabbitmq-server
+
+services:
+    - rabbitmq
+
 php:
   - 7.0
+  - 8.0
 
 env:
   - STOMP_PROVIDER=rabbitmq
