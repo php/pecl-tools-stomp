@@ -79,9 +79,9 @@ typedef struct _stomp {
 } stomp_t;
 
 stomp_t *stomp_init();
-int stomp_connect(stomp_t *stomp, const char *host, unsigned short port TSRMLS_DC);
+int stomp_connect(stomp_t *stomp, const char *host, unsigned short port);
 void stomp_close(stomp_t *stomp);
-int stomp_send(stomp_t *connection, stomp_frame_t *frame TSRMLS_DC);
+int stomp_send(stomp_t *connection, stomp_frame_t *frame);
 stomp_frame_t *stomp_read_frame_ex(stomp_t *connection, int use_stack);
 int stomp_valid_receipt(stomp_t *connection, stomp_frame_t *frame);
 int stomp_select_ex(stomp_t *connection, const long int sec, const long int usec);

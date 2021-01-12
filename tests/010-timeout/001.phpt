@@ -25,13 +25,21 @@ var_dump($s->setReadTimeout(10, 5));
 // Third test, read supposed to return 10.5
 var_dump($s->getReadTimeout());
 
-// Set read timout with the first param as a string, supposed to trigger a warning
-var_dump($s->setReadTimeout(''));
+try {
+	// Set read timout with the first param as a string, supposed to trigger a warning/exception
+	var_dump($s->setReadTimeout(''));
+} catch (TypeError $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
 // Fourth test, read supposed to get the last value set : 10.5
 var_dump($s->getReadTimeout());
 
-// Set read timout with the second param as a string, supposed to trigger a warning
-var_dump($s->setReadTimeout(10, ''));
+try {
+	// Set read timout with the second param as a string, supposed to trigger a warning/exception
+	var_dump($s->setReadTimeout(10, ''));
+} catch (TypeError $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
 // Fourth test, read supposed to get the last value set : 10.5
 var_dump($s->getReadTimeout());
 
@@ -64,18 +72,14 @@ array(2) {
   ["usec"]=>
   int(5)
 }
-
-Warning: Stomp::setReadTimeout() expects parameter 1 to be long, string given in %s on line %d
-NULL
+%AStomp::setReadTimeout()%s1%s string given%A
 array(2) {
   ["sec"]=>
   int(10)
   ["usec"]=>
   int(5)
 }
-
-Warning: Stomp::setReadTimeout() expects parameter 2 to be long, string given in %s on line %d
-NULL
+%AStomp::setReadTimeout()%s2%s string given%A
 array(2) {
   ["sec"]=>
   int(10)

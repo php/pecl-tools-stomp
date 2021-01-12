@@ -25,13 +25,23 @@ var_dump(stomp_set_read_timeout($link, 10, 5));
 // Third test, read supposed to return 10.5
 var_dump(stomp_get_read_timeout($link));
 
-// Set read timout with the first param as a string, supposed to trigger a warning
-var_dump(stomp_set_read_timeout($link, ''));
+try {
+	// Set read timout with the first param as a string, supposed to trigger a warning on PHP 7
+	// supposed to trigger an exception on PHP 8
+	var_dump(stomp_set_read_timeout($link, ''));
+} catch (TypeError $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
 // Fourth test, read supposed to get the last value set : 10.5
 var_dump(stomp_get_read_timeout($link));
 
-// Set read timout with the second param as a string, supposed to trigger a warning
-var_dump(stomp_set_read_timeout($link, 10, ''));
+try {
+	// Set read timout with the second param as a string, supposed to trigger a warning on PHP 7
+	// supposed to trigger an exception on PHP 8
+	var_dump(stomp_set_read_timeout($link, 10, ''));
+} catch (TypeError $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
 // Fourth test, read supposed to get the last value set : 10.5
 var_dump(stomp_get_read_timeout($link));
 
@@ -64,18 +74,14 @@ array(2) {
   ["usec"]=>
   int(5)
 }
-
-Warning: stomp_set_read_timeout() expects parameter 2 to be long, string given in %s on line %d
-NULL
+%Astomp_set_read_timeout()%s2%S string given%A
 array(2) {
   ["sec"]=>
   int(10)
   ["usec"]=>
   int(5)
 }
-
-Warning: stomp_set_read_timeout() expects parameter 3 to be long, string given in %s on line %d
-NULL
+%Astomp_set_read_timeout()%s3%s string given%A
 array(2) {
   ["sec"]=>
   int(10)
