@@ -1042,13 +1042,13 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd, size
 	zval *headers = NULL, rv;
 
 	if (stomp_object) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() , "S|a", &transaction_id, &headers) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() , "S!|a", &transaction_id, &headers) == FAILURE) {
 			return;
 		}
 		FETCH_STOMP_OBJECT;
 	} else {
 		zval *arg;
-		if (zend_parse_parameters(ZEND_NUM_ARGS() , "rS|a", &arg, &transaction_id, &headers) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() , "rS!|a", &arg, &transaction_id, &headers) == FAILURE) {
 			return;
 		}
 		FETCH_STOMP_RSRC(stomp, arg);
@@ -1056,7 +1056,7 @@ static void _php_stomp_transaction(INTERNAL_FUNCTION_PARAMETERS, char *cmd, size
 
 	INIT_FRAME_L(frame, cmd, cmd_len);
 
-	if (ZSTR_LEN(transaction_id)) {
+	if (transaction_id && ZSTR_LEN(transaction_id)) {
 		ZVAL_STR(&rv, zend_string_copy(transaction_id));
 		zend_hash_str_add(frame.headers, "transaction", sizeof("transaction") - 1, &rv);
 	}
