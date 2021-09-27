@@ -46,7 +46,7 @@ try {
 var_dump(stomp_get_read_timeout($link));
 
 // Set read timout with the params as null
-var_dump(stomp_set_read_timeout($link, null, null));
+var_dump(stomp_set_read_timeout($link, 0, 0));
 // Fifth test, read supposed to get the last value set : 0.0
 var_dump(stomp_get_read_timeout($link));
 

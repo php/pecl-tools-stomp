@@ -44,7 +44,7 @@ try {
 var_dump($s->getReadTimeout());
 
 // Set read timout with the params as null
-var_dump($s->setReadTimeout(null, null));
+var_dump($s->setReadTimeout(0, 0));
 // Fifth test, read supposed to get the last value set : 0.0
 var_dump($s->getReadTimeout());
 
