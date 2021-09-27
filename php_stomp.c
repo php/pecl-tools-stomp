@@ -805,10 +805,13 @@ PHP_FUNCTION(stomp_subscribe)
 		FRAME_HEADER_FROM_HASHTABLE(frame.headers, Z_ARRVAL_P(headers));
 	}
 
-	/* Add the destination */
-	ZVAL_STRINGL(&rv, "client", sizeof("client") - 1);
-	zend_hash_str_update(frame.headers, "ack", sizeof("ack") - 1, &rv);
+	/* Add the ack if not already in the headers */
+	if (!zend_hash_str_find(frame.headers, ZEND_STRL("ack"))) {
+		ZVAL_STRINGL(&rv, "client", sizeof("client") - 1);
+		zend_hash_str_update(frame.headers, "ack", sizeof("ack") - 1, &rv);
+	}
 
+	/* Add the destination */
 	ZVAL_STR(&rv, zend_string_copy(destination));
 	zend_hash_str_update(frame.headers, "destination", sizeof("destination") - 1, &rv);
 	/* zend_hash_str_add_ptr(frame.headers, ZEND_STRL("activemq.prefetchSize"), estrdup("1")); */
