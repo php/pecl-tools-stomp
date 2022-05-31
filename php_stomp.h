@@ -1,8 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 5                                                        |
-  +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2010 The PHP Group                                |
+  | Copyright (c) The PHP Group                                          |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -27,7 +25,7 @@ typedef struct _stomp_object {
 } stomp_object_t;
 
 #define PHP_STOMP_EXTNAME                       "Stomp"
-#define PHP_STOMP_VERSION                       "2.0.3-dev"
+#define PHP_STOMP_VERSION                       "2.0.3"
 
 #define PHP_STOMP_RES_NAME                      "stomp connection"
 

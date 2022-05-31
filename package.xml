@@ -30,12 +30,12 @@ This extension allows php applications to communicate with any Stomp compliant M
         <email>remi@php.net</email>
         <active>yes</active>
     </lead>
-    <date>2018-06-29</date>
-    <version><release>2.0.3dev</release><api>2.0.1</api></version>
+    <date>2022-05-31</date>
+    <version><release>2.0.3</release><api>2.0.1</api></version>
     <stability><release>stable</release><api>stable</api></stability>
     <license uri="http://www.php.net/license">PHP License</license>
 	<notes>
-        -
+        - Fix compatibility with PHP 8
     </notes>
     <contents>
         <dir name="/">
