@@ -12,15 +12,8 @@ if test "$PHP_STOMP" != "no"; then
   test -z "$PHP_OPENSSL" && PHP_OPENSSL=no
 
   if test "$PHP_OPENSSL" != "no" || test "$PHP_OPENSSL_DIR" != "no"; then
-    PHP_SETUP_OPENSSL(STOMP_SHARED_LIBADD,
-            [
-            AC_DEFINE(HAVE_STOMP_SSL,1,[ ])
-            ], [
-            AC_MSG_ERROR([OpenSSL libraries not found.
-
-                Check the path given to --with-openssl-dir and output in config.log)
-            ])
-    ])
+    PHP_SETUP_OPENSSL([STOMP_SHARED_LIBADD],
+      [AC_DEFINE([HAVE_STOMP_SSL], [1], [ ])])
 
     PHP_SUBST(STOMP_SHARED_LIBADD)
   fi
