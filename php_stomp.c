@@ -389,7 +389,7 @@ PHP_MINIT_FUNCTION(stomp)
 
 	/* Register StompException class */
 	INIT_CLASS_ENTRY(ce, PHP_STOMP_EXCEPTION_CLASSNAME, stomp_exception_methods);
-	stomp_ce_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default());
+	stomp_ce_exception = zend_register_internal_class_ex(&ce, zend_ce_exception);
 
 	/* Properties */
 	zend_declare_property_null(stomp_ce_exception, "details", sizeof("details")-1, ZEND_ACC_PRIVATE );
@@ -1004,7 +1004,7 @@ PHP_FUNCTION(stomp_read_frame)
 				fcc.object = Z_OBJ_P(return_value);
 
 				if (zend_call_function(&fci, &fcc ) == FAILURE) {
-					zend_throw_exception_ex(zend_exception_get_default(), 0 , "Could not execute %s::%s()", ZSTR_VAL(ce->name), ZSTR_VAL(ce->constructor->common.function_name));
+					zend_throw_exception_ex(zend_ce_exception, 0 , "Could not execute %s::%s()", ZSTR_VAL(ce->name), ZSTR_VAL(ce->constructor->common.function_name));
 				} else {
 					zval_ptr_dtor(&retval);
 				}
